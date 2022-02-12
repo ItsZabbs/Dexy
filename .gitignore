@@ -161,4 +161,5 @@ cython_debug/
 .idea/
 download_movesets.py
 lib/pokedex
-lib/cogs/pokedexdata
+lib/cogs/pokedexdata/*.py
+lib/cogs/pokedexdata/*.zip
