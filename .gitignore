@@ -1,6 +1,6 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
-bot/__pycache__
+lib/bot/__pycache__
 *.py[cod]
 *$py.class
 
@@ -15,8 +15,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
+lib/cogs/utils/
 parts/
 sdist/
 var/
@@ -160,3 +160,5 @@ cython_debug/
 #.idea/
 .idea/
 download_movesets.py
+lib/pokedex
+lib/cogs/pokedexdata
