@@ -1,7 +1,7 @@
 import gc
 import json
 import discord
-from typing import List,AnyStr
+from typing import Dict,List
 from discord.ext import commands,tasks
 import difflib
 import random
@@ -13,6 +13,7 @@ import re
 
 from ..db import db
 
+serebii="https://www.serebii.net/pokemon/art/"
 back_dict = {'afd': 'afd-back', 'none': 'ani-back', 'gen1': 'gen1-back', 'rgb': 'gen1rgb-back', 'gen2': 'gen2-back',
             'gen3': 'gen3-back', 'rb': 'gen3-back', 'pt': 'gen4-back', 'bw': 'gen5-back', 'bwani': 'gen5ani-back'}
 normal_dict = {'bw': 'gen5', 'bwani': 'gen5ani', 'none': 'ani', 'afd': 'afd', 'hgss':'gen4','pt': 'gen4dp-2', 'dp': 'gen4dp',
@@ -31,6 +32,9 @@ type_dict = {1: ('Normal', (168, 168, 120)), 2: ('Fighting', (192, 48, 40)), 3: 
             10002: ('Shadow', (104, 160, 144))}
 colour_dict={'normal': (168, 168, 120), 'fighting': (192, 48, 40), 'flying': (168, 144, 240), 'poison': (160, 64, 160), 'ground': (224, 192, 104), 'rock': (184, 160, 56), 'bug': (168, 184, 32), 'ghost': (112, 88, 152), 'steel': (184, 184, 208), 'fire': (240, 128, 48), 'water': (104, 144, 240), 'grass': (120, 200, 80), 'electric': (248, 208, 48), 'psychic': (248, 88, 136), 'ice': (152, 216, 216), 'dragon': (112, 56, 248), 'dark': (112, 88, 72), 'fairy': (238, 153, 172), 'unknown': (104, 160, 144), 'shadow': (104, 160, 144)}
 BaseURL = "https://play.pokemonshowdown.com/sprites/"
+
+#Alias cache implementation
+alias_cache:Dict[List,List]={}
 pokemon_names:list=json.load(open("lib/cogs/pokedexdata/pokemon_names.json"))
 location_dict=json.load(open("lib/cogs/pokedexdata/location_dict.json",encoding='utf-8'))
 evol_lines=json.load(open("lib/cogs/pokedexdata/pokemon_evolution_lines.json",encoding='utf-8'))
@@ -80,7 +84,7 @@ with open("lib/cogs/pokedexdata/movesets.json",encoding='utf-8') as move:
 
 async def embed_this_please(embed:discord.Embed):
     if random.randint(1,15)==1:
-        embed.add_field(name="Enjoying the bot?",value='Donate [here](https://buymeacoffee.com/Zabbs)\nUpvote the bot on [top.gg](https://top.gg/bot/853556227610116116) or [botlist](https://discordbotlist.com/bots/pokedex-bot)')
+        embed.add_field(name="Enjoying the bot?",value='You can always donate a coffee [here](https://buymeacoffee.com/Zabbs)\nYou could also upvote the bot on [top.gg](https://top.gg/bot/853556227610116116)!\n It helps out more than you think!!')
     return embed
 async def get_pokedex_stuff(pokemon_dict, lite=False):
     stats = []
@@ -113,7 +117,9 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             multipleTypes = "Type"
         else:
             multipleTypes = "Types"
-        name = pokemon_dict["name"]
+        name = " ".join(n.capitalize() for n in pokemon_dict["name"].replace("-"," ").split())
+        # name:str=name.replace("-"," ")
+        # name=" ".join(n.capitalize() for n in name.split())
         colour: list = pokemon_dict["color"]
         if not isinstance(colour,list):
             colour=(88, 101, 242)
@@ -128,11 +134,11 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
                 dex_entry = ""
         if dex_entry != "":
             embed = discord.Embed(
-                title=f'{name.capitalize()}', description=f"*{dex_entry}*", colour=discord.Color.from_rgb(*colour))
+                title=name, description=f"*{dex_entry}*", colour=discord.Color.from_rgb(*colour))
         # then the next field is the types
         else:
             embed = discord.Embed(
-                title=f'{name.capitalize()}', colour=discord.Color.from_rgb(*colour))
+                title=name, colour=discord.Color.from_rgb(*colour))
         embed.add_field(name=f"{multipleTypes}", value=f'{types}', inline=True)
 
         try:
@@ -145,6 +151,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             try:
                 # There's no gender ratio therefore its no gender or 100% female or male
                 genderRatio = pokemon_dict["gender"]
+                genderRatio="No Gender" if genderRatio=="N" else "Male" if genderRatio=="M" else "Female"
             except KeyError:
                 genderRatio = "50% for both genders"
         if genderRatio != "":
@@ -196,12 +203,13 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             url = pokemon_dict["url"]
         except KeyError:
             url = ""
-        if len(pokemon_dict["EggGroups"]) == 1:
+        if len(pokemon_dict["eggGroups"]) == 1:
             Egg = "Egg Group"
         else:
             Egg = "Egg Groups"
         if url != "":
-            embed.set_thumbnail(url=url)
+            embed.set_thumbnail(url=serebii+url+".png")
+            embed.set_footer(text="Please report any wrong artwork/icons using the `feedback` command!")
         embed.insert_field_at(
             2, name=f"**{Abilities}**", value=f"{abilities}", inline=True)
         height = pokemon_dict["heightm"]
@@ -231,19 +239,23 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
         embed.add_field(name="**Weight**", value=f"{weight} kg", inline=True)
         embed.add_field(name="**Smogon Tier**", value=f"{tier}", inline=True)
         embed.add_field(
-            name=f"**{Egg}**", value=f"{', '.join(pokemon_dict['EggGroups'])}", inline=False)
+            name=f"**{Egg}**", value=f"{', '.join(pokemon_dict['eggGroups'])}", inline=False)
         embed.add_field(name='**External Resources**',
                         value=f"{' • '.join(urllist)}", inline=False)
         return embed
     else:
         embed = discord.Embed(
-            title=f'{pokemon_dict["name"].capitalize()}', colour=discord.Color.from_rgb(*pokemon_dict["color"]))
+            title=" ".join(n.capitalize() for n in pokemon_dict["name"].replace("-"," ").split()), colour=discord.Color.from_rgb(*pokemon_dict["color"]))
         types = " , ".join(pokemon_dict["types"])
         if len(pokemon_dict["types"]) == 1:
             multipleTypes = "Type"
         else:
             multipleTypes = "Types"
-        embed.set_thumbnail(url=pokemon_dict['url'])
+        try:
+            embed.set_thumbnail(url=serebii+pokemon_dict['url']+".png")
+            embed.set_footer(text="Please report any wrong artwork/icons using the `feedback` command!")
+        except:
+            pass
         embed.add_field(name='**Types**', value=f'{types}', inline=False)
         embed.add_field(name='**Abilities**',
                         value=f'{abilities}', inline=True)
@@ -294,21 +306,29 @@ async def convert_four_baseurl(back: bool, shiny: bool, pokemon: str, sprite_typ
     return url
 
 
-async def convert_string_sprite_to_structured(x, ctx) -> Tuple[str,str,str,str]:
+async def convert_string_sprite_to_structured(x, ctx:commands.Context) -> Tuple[str,str,str,str]:
     x=x.replace("-"," ")
     lis = ('rs', 'bw', 'yellow', 'gen3', 'gen1', 'rb', 'gen5', 'silver', 'pt', 'rg',
         'frlg', 'dp', 'gold', 'bwani', 'gen2', 'gen5ani', 'crystal', 'gen4',
         'afd', 'gen2g', 'gen2s','hgss','dp','pt','gen4')
     x = x.lower()
     try:
-        existingaliases = (db.field(
-            "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)).split(";")
-        existingsprites = (db.field(
-            "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id)).split("|")
+        if ctx.guild.id in alias_cache:
+            existingaliases,existingsprites=alias_cache[ctx.guild.id]
+        else:
+            existingaliases:List = (db.field("SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)).split(";")
+            existingsprites:List = (db.field("SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id)).split("|")
+            if len(alias_cache)>120:
+                alias_cache.pop(tuple(alias_cache.keys())[0])
+            alias_cache[ctx.guild.id]=existingaliases,existingsprites
+        #return commands.when_mentioned_or(*prefix_cache[message.guild.id])(user, message)
+        # existingaliases = (db.field(
+        #     "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)).split(";")
+        # existingsprites = (db.field(
+        #     "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id)).split("|")
         if x in existingaliases:
-            index = existingaliases.index(x)
-            x = existingsprites[index]
-    except AttributeError:
+            x = existingsprites[existingaliases.index(x)]
+    except:
         pass
         # raise NameError("Could not find that pokemon")
     x = "  ".join(x.split())
@@ -335,6 +355,7 @@ async def convert_string_sprite_to_structured(x, ctx) -> Tuple[str,str,str,str]:
     x = re.sub("female", "f", x)
     x = re.sub("galarian", "galar", x)
     x = re.sub("alolan", "alola", x)
+    x = re.sub("hisuian","hisui",x)
     x = x.split()
     if x[0].startswith("tapu") and len(x)>1:
         x=x[0]+x[1]
@@ -347,7 +368,7 @@ async def convert_string_sprite_to_structured(x, ctx) -> Tuple[str,str,str,str]:
         pass
     elif x.startswith((
             "crowned", "origin", "dusk-mane", 'duskmane', 'dawnwings', 'dawn-wings', "megax", "megay", "female",
-            "galar", "alola", "mega", "gmax", "eternamax")):
+            "galar", "alola", "mega", "gmax", "eternamax","hisui")):
         x = x.split("-")
         x = x[-1] + "-" + ("".join((x[-2::-1])[::-1]))
     result = result if result else "None"
@@ -363,6 +384,7 @@ class Pokemon(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.bot.alias_cache=alias_cache
         self.cleanup_gc.start()
     def cog_unload(self):
         self.cleanup_gc.stop()
@@ -397,18 +419,25 @@ class Pokemon(commands.Cog):
                     *_,name=await convert_string_sprite_to_structured(name,ctx)
                     raise KeyError(
                         f"Were you looking for {name}?")
-        try:
-            existingaliases = (db.field(
-                "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)).split(";")
-            existingsprites = (db.field(
-                "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id)).split("|")
-        except:
-            existingaliases = []
-            existingsprites = []
+        if ctx.guild.id in self.bot.alias_cache:
+            existingaliases,existingsprites=self.bot.alias_cache[ctx.guild.id]
+        else:
+            try:
+                existingaliases = (db.field(
+                    "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)).split(";")
+                existingsprites = (db.field(
+                    "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id)).split("|")
+            except:
+                existingaliases = []
+                existingsprites = []
+            if len(self.bot.alias_cache)>120:
+                self.bot.alias_cache.pop(tuple(self.bot.alias_cache.keys())[0])
+            self.bot.alias_cache[ctx.guild.id]=existingaliases,existingsprites
         if alias in existingaliases:
             return await ctx.send("That's an existing alias!")
         existingsprites.append(sprite)
         existingaliases.append(alias)
+        self.bot.alias_cache.update({ctx.guild.id:(existingaliases,existingsprites)})
         existingaliases = ";".join(existingaliases)
         existingsprites = "|".join(existingsprites)
         db.execute(
@@ -421,19 +450,33 @@ class Pokemon(commands.Cog):
     @commands.has_permissions(manage_guild=True)
     async def remove_alias(self, ctx, alias):
         '''Removes an existing alias'''
-        try:
-            existingaliases = (db.field(
-                "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)).split(";")
-            existingsprites = (db.field(
-                "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id)).split("|")
-        except:
-            return await ctx.send("You do not have any aliases set for this server!")
+        if ctx.guild.id in self.bot.alias_cache:
+            existingaliases,existingsprites=self.bot.alias_cache[ctx.guild.id]
+        else:
+            try:
+                existingaliases = (db.field(
+                    "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)).split(";")
+                existingsprites = (db.field(
+                    "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id)).split("|")
+            except:
+                return await ctx.send("You do not have any aliases set for this server!")
+            if len(self.bot.alias_cache)>120:
+                self.bot.alias_cache.pop(tuple(self.bot.alias_cache.keys())[0])
+            self.bot.alias_cache[ctx.guild.id]=existingaliases,existingsprites
+        # try:
+        #     existingaliases = (db.field(
+        #         "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)).split(";")
+        #     existingsprites = (db.field(
+        #         "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id)).split("|")
+        # except:
+        #     return await ctx.send("You do not have any aliases set for this server!")
         try:
             index = existingaliases.index(alias)
             existingaliases.pop(index)
             existingsprites.pop(index)
         except:
             return await ctx.send("There's no alias like that!")
+        self.bot.alias_cache.update({ctx.guild.id:(existingaliases,existingsprites)})
         existingaliases = ";".join(existingaliases)
         existingsprites = "|".join(existingsprites)
         db.execute(
@@ -445,13 +488,26 @@ class Pokemon(commands.Cog):
     @alias.command(name='list')
     async def list_aliases(self, ctx):
         '''Lists all the server aliases for a pokemon'''
-        try:
-            existingaliases = (db.field(
-                "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)).split(";")
-            existingsprites = (db.field(
-                "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id)).split("|")
-        except:
-            return await ctx.send("You do not have any aliases set for this server!")
+        if ctx.guild.id in self.bot.alias_cache:
+            existingaliases,existingsprites=self.bot.alias_cache[ctx.guild.id]
+        else:
+            try:
+                existingaliases = (db.field(
+                    "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)).split(";")
+                existingsprites = (db.field(
+                    "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id)).split("|")
+            except:
+                return await ctx.send("You do not have any aliases set for this server!") 
+            if len(self.bot.alias_cache)>120:
+                self.bot.alias_cache.pop(tuple(self.bot.alias_cache.keys())[0])
+            self.bot.alias_cache[ctx.guild.id]=existingaliases,existingsprites
+        # try:
+        #     existingaliases = (db.field(
+        #         "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)).split(";")
+        #     existingsprites = (db.field(
+        #         "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id)).split("|")
+        # except:
+        #     return await ctx.send("You do not have any aliases set for this server!")
         aliases=[]
         for n,(e,v) in enumerate(zip(existingaliases,existingsprites),start=1):
             if e or v:
@@ -659,10 +715,11 @@ class Pokemon(commands.Cog):
         embed.add_field(name='*Is Immune from:*',value=", ".join(dict.fromkeys(immuneFrom))if immuneFrom else "None",inline=False)
         
         ##OFFENSIVE
-        embed.add_field(name='**__OFFENSE__**\n\n *Does super effective damage to:*',value=", ".join(dict.fromkeys(supereffectiveTo)) if supereffectiveTo else "None",inline=False)
-        if effectiveTo:embed.add_field(name='*Deals normal damage to:* ',value=", ".join(dict.fromkeys(effectiveTo)) if effectiveTo else "None",inline=False)
-        if resistantTo:embed.add_field(name='*Resisted by:*',value=", ".join(dict.fromkeys(resistantTo)) if resistantTo else "None",inline=False)
-        if immuneTo:embed.add_field(name='*Does not affect:*',value=", ".join(dict.fromkeys(immuneTo)) if immuneTo else "None",inline=False)
+        if len(typestring.split())==1:
+            embed.add_field(name='**__OFFENSE__**\n\n *Does super effective damage to:*',value=", ".join(dict.fromkeys(supereffectiveTo)) if supereffectiveTo else "None",inline=False)
+            if effectiveTo:embed.add_field(name='*Deals normal damage to:* ',value=", ".join(dict.fromkeys(effectiveTo)) if effectiveTo else "None",inline=False)
+            if resistantTo:embed.add_field(name='*Resisted by:*',value=", ".join(dict.fromkeys(resistantTo)) if resistantTo else "None",inline=False)
+            if immuneTo:embed.add_field(name='*Does not affect:*',value=", ".join(dict.fromkeys(immuneTo)) if immuneTo else "None",inline=False)
         embed=await embed_this_please(embed)
         await ctx.send(embed=embed)
     
@@ -835,6 +892,7 @@ class Pokemon(commands.Cog):
     @commands.command(name='artwork', aliases=['art'])
     async def artwork(self, ctx, *, pokemon: str):
         '''Sends the official artwork of the mentioned pokemon'''
+        #return await ctx.send("There have been some inconsistencies with the artwork URLs recently. The bot developer is working hard to resolve these. Try and support him through https://buymeacoffee.com/Zabbs \n Sorry for the inconvenience.")
         pokemon = pokemon.lower()
         pokemon = pokemon.replace(" ", "")
         try:
@@ -852,7 +910,8 @@ class Pokemon(commands.Cog):
             except:
                 return await ctx.send("You've sent an incorrect spelling or a wrong pokemon name")
         embed=discord.Embed()
-        embed.set_image(url=url)
+        embed.set_image(url=serebii+url+".png")
+        embed.set_footer(text="Please report any wrong artworks using the `feedback` command!")
         embed=await embed_this_please(embed)
         await ctx.send(embed=embed)
 
@@ -1180,6 +1239,6 @@ class Pokemon(commands.Cog):
                     pass
 
 
-def setup(bot):
-    bot.add_cog(Pokemon(bot))
+async def setup(bot):
+    await bot.add_cog(Pokemon(bot))
 

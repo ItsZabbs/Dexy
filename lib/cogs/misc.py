@@ -4,12 +4,15 @@ from discord.ext import commands
 from time import time
 from discord.ext import tasks
 from discord.ext.commands.cooldowns import BucketType
-
+from random import choice
 from ..db import db
 
+memes=['SPOILER_3.gif', 'SPOILER_1.jpg', 'SPOILER_2.gif']
 
 class Misc(commands.Cog):
     '''Miscellaneous commands'''
+    def check_meme_server(ctx:commands.Context):
+        return ctx.guild.id==857700650992795648
     def __init__(self, bot):
         self.bot = bot
         self.feedback_webhook=int(bot.feedback_webhook)
@@ -19,8 +22,14 @@ class Misc(commands.Cog):
         return super().cog_unload()
     @commands.command(name='invite',help='Provides an invite link for the bot')
     async def sendinvite(self,ctx):
-        embed = discord.Embed(title=f'Add {self.bot.user.name} to your server!',colour=ctx.author.colour,description=f"Click **[here](https://discord.com/api/oauth2/authorize?client_id={ctx.me.id}&permissions=277092550656&scope=bot)** to invite the bot to your server!")
+        embed = discord.Embed(title=f'Add Pokedex Bot to your server!',colour=ctx.author.colour,description=f"Click **[here](https://discord.com/oauth2/authorize?client_id=853556227610116116&permissions=277092812864&scope=bot%20applications.commands)** to invite the bot to your server!")
         await ctx.send(embed=embed)
+    @commands.command(name='killtab')
+    @commands.check(check_meme_server)
+    async def killtab(self,ctx):
+        # embed=discord.Embed(colour=ctx.author.colour)
+        # embed.set_image(url="https://cdn.discordapp.com/attachments/752901803124719639/"+choice(memes))
+        await ctx.send(file=discord.File("data/images/"+choice(memes),spoiler=True))
     @commands.group()
     async def prefix(self,ctx):
         '''Prefix commands to set what the bot responds to'''
@@ -112,7 +121,7 @@ class Misc(commands.Cog):
     async def before_presence(self):
         print('waiting...')
         await self.bot.wait_until_ready()
-def setup(bot):
-    bot.add_cog(Misc(bot))
+async def setup(bot):
+    await bot.add_cog(Misc(bot))
 
 

@@ -83,6 +83,6 @@ class Help(commands.Cog):
     def cog_unload(self):
         self.bot.help_command = self._original_help_command
 
-def setup(bot):
-    bot.add_cog(Help(bot))
+async def setup(bot):
+    await bot.add_cog(Help(bot))
 

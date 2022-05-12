@@ -200,5 +200,5 @@ class Meta(commands.Cog):
     @tasks.loop(seconds=5.0)
     async def commit_db(self):
         db.commit()
-def setup(bot):
-    bot.add_cog(Meta(bot))
+async def setup(bot):
+    await bot.add_cog(Meta(bot))
