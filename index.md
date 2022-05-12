@@ -3,9 +3,9 @@
 Pokedex Bot is a fully fledged Pokemon bot with all kinds of information necessary to competitive and leisure Pokemon players!<br />Also has features like Pokemon sprites, artworks and much more!
 
 <br>
-Find the support server here - [Support server link](https://discord.gg/FBFTYp7nnq "Support server link")
+Find the support server here - [Support server link](/https://discord.gg/FBFTYp7nnq)
 <br>
-Invite the bot! - [Invite link](https://discord.com/api/oauth2/authorize?client_id=853556227610116116&permissions=277092812864&scope=bot%20applications.commands "Invite link")
+Invite the bot! - [Invite link](/https://discord.com/api/oauth2/authorize?client_id=853556227610116116&permissions=277092812864&scope=bot%20applications.commands)
 <br>
 
 ## Features
