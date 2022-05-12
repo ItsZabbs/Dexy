@@ -1,7 +1,3 @@
-<head>
-  <link rel="icon" type="image/gif/png" href="assets/botlogo.png">
-</head>
-
 
 ## Pokedex Bot
 
