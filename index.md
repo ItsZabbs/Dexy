@@ -2,11 +2,9 @@
 
 Pokedex Bot is a fully fledged Pokemon bot with all kinds of information necessary to competitive and leisure Pokemon players!<br />Also has features like Pokemon sprites, artworks and much more!
 
-<br>
-Find the support server here - <p><a href="https://discord.gg/FBFTYp7nnq">Support server link</a></p>
-<br>
-Invite the bot! - <p><a href="https://discord.com/api/oauth2/authorize?client_id=853556227610116116&permissions=277092812864&scope=bot%20applications.commands">Invite link</a></p>
-<br>
+Find the support server here - <a href="https://discord.gg/FBFTYp7nnq">Support server link</a>
+
+Invite the bot! - <a href="https://discord.com/api/oauth2/authorize?client_id=853556227610116116&permissions=277092812864&scope=bot%20applications.commands">Invite link</a>
 
 ## Features
 
@@ -23,7 +21,7 @@ Find it tough to calculate type matchups? You can use the bot to calculate it no
 
 `<>` Indicates a required argument. You'll have to send it in order to get your desired outcome. <br>
 `[]` Indicates an optional argument. You can choose to send this if you want. For example, choosing the learn type for the [moveset](#movesets) command.<br>
-`[foo|bar]` indicates the command's aliases. You can any one of these to initiate the command's output. For example, `[dex|pokedex]` indicates that you can use either `dexy dex manectric` or `dexy pokedex manectric`
+`[foo|bar]` indicates the command's aliases. You can use any one of these to initiate the command's output. For example, `[dex|pokedex]` indicates that you can use either `dexy dex manectric` or `dexy pokedex manectric`
 ###  <span style="color:red">Do not literally type out the []<>| etc.</span> 
 # Pokemon related commands
 
