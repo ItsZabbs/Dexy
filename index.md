@@ -1,4 +1,4 @@
-<head><link rel="shortcut icon" type="image/x-icon" href="https://cdn.discordapp.com/avatars/853556227610116116/8efe9df25de5cdb5bc90232797032ef6.png"></head>
+<head><link rel="icon" type="image/png" href="https://cdn.discordapp.com/avatars/853556227610116116/8efe9df25de5cdb5bc90232797032ef6.png"/></head>
 ## Pokedex Bot
 
 Pokedex Bot is a fully fledged Pokemon bot with all kinds of information necessary to competitive and leisure Pokemon players!<br />Also has features like Pokemon sprites, artworks and much more!
