@@ -20,7 +20,7 @@ Find it tough to calculate type matchups? You can use the bot to calculate it no
 # Documentation guide
 
 `<>` Indicates a required argument. You'll have to send it in order to get your desired outcome. <br>
-`[]` Indicates an optional argument. You can choose to send this if you want. For example, choosing the learn type for the [moveset](#movesets) command.<br>
+`[]` Indicates an optional argument. You can choose to send this if you want. For example, choosing the learn type for the [moveset](https://itszabbs.github.io/Pokedex-Bot#movesets) command.<br>
 `[foo|bar]` indicates the command's aliases. You can use any one of these to initiate the command's output. For example, `[dex|pokedex]` indicates that you can use either `dexy dex manectric` or `dexy pokedex manectric`
 ###  <span style="color:red">Do not literally type out the []<>| etc.</span> 
 # Pokemon related commands
@@ -78,6 +78,7 @@ Example Usage:
 ## Sprites
 
 Description- Sends the ingame sprite for a Pokemon.
+
 Command- `dexy [sprite|spr] <sprite-name>`
 
 
@@ -87,8 +88,22 @@ Add `shiny` to the Pokemon name to see the shiny sprite.
 
 Add `back` to the Pokemon name to see the back sprite.
 
+### You can also use bare italics to summon Pokemon names. This can be done via:
+
+`*<pokemon name>*`
+
+Examples- 
+
+*Manectric shiny* - Would summon a Shiny Manectric
+
+*Manectric back* - Would summon the back sprite of Manectric
+
+*Manectric bwani* - Would summon the BW2 version of the sprite. 
+
+*Manectric bwani* *Manectric* - This would summon two sprites. The animated Manectric sprite, and the BW2 version. Remember to surroud individual Pokemon names in different italics. The text in the above example is actually - `*Manectric bwani* *Manectric*`
+
 Version specific Sprites:
-| Sprite               | Game                           |
+| Sprite               | Corresponding Game                           |
 |----------------------|--------------------------------|
 | `bw` or `gen5`       | Black and White                |
 | `bwani` or `gen5ani` | Black 2 and White 2            |
@@ -126,7 +141,7 @@ This can be super easy to do.
 
 The `<alias-name>` can be any text you wish to summon the sprite with. For multiple words, surround the alias-name in doublequotes.
 
-The `sprite-name` follows the same syntax as the `sprite-name` in the [sprite](#sprites) commands.
+The `sprite-name` follows the same syntax as the `sprite-name` in the [sprite](https://itszabbs.github.io/Pokedex-Bot#sprites) commands.
 
 Example Usage-
 
@@ -204,3 +219,62 @@ Command - `dexy [type] <pokemon or move>`
 `dexy type Meowth Alola` <br>
 `dexy type Play Rough` <br>
 # Miscellaneous
+
+## Prefix management
+This section will describe the commands to use to set what the bot responds to
+
+###  <span style="color:yellow">How to add a prefix-</span> 
+Command- `dexy prefix add <new prefix>`
+
+`<new prefix>` can be any characters but should not include a space or comma.
+
+###  <span style="color:yellow">How to remove a prefix-</span> 
+Command- `dexy prefix remove <old prefix>`
+
+`<old prefix>` can be any existing prefix. Look at the nexr section on how to see all prefixes.
+
+Note: You can remove the default prefix. Before doing so, you should ensure that the bot has another prefix set. If you remove the prefix by accident, and there is no other prefix, mentioning the bot instead of dexy will still work.
+###  <span style="color:yellow">How to list all prefix-</span> 
+Command- `dexy prefix list`
+
+This will list all prefixes separated by a comma.
+
+## Feedback
+
+Command- `dexy feedback <whatever you want to put here>`
+
+Description- `Sends feedback to the bot developer. Any kind of feedback or suggestions to even bug reports are accepted.`
+
+## Invite
+
+Command- `dexy invite`
+
+Description- Sends the invite link to add the bot to another server.
+
+## About
+
+Command- `dexy about`
+
+Description- Sends the bot's information. This also lists any potential influences on the bot's design.
+
+## Ping
+
+Command- `dexy ping`
+
+Description- Returns the bot's latency.
+
+## Vote
+
+Command- `dexy vote`
+
+Description- Sends the bot's top.gg link so people can vote for it.
+
+## Help
+
+Command- `dexy help [command name]`
+
+`<command name>` can be any command name. It can also be a category of commands, for example, Pokemon or Misc.
+
+Ensure that the category name is capitalised so it is `Pokemon` and not `pokemon`.
+
+Not sending any command name will result in an embed that lists all usable commands.
