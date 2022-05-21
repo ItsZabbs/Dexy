@@ -234,7 +234,7 @@ Command- `dexy prefix remove <old prefix>`
 `<old prefix>` can be any existing prefix. Look at the nexr section on how to see all prefixes.
 
 Note: You can remove the default prefix. Before doing so, you should ensure that the bot has another prefix set. If you remove the prefix by accident, and there is no other prefix, mentioning the bot instead of dexy will still work.
-###  <span style="color:yellow">How to list all prefix-</span> 
+###  <span style="color:yellow">How to list all prefixes-</span> 
 Command- `dexy prefix list`
 
 This will list all prefixes separated by a comma.
