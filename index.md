@@ -51,7 +51,7 @@ Command - `dexy move <move-name>`
 `dexy move lick` - Provides the information the move Lick.
 
 ## Movesets
-Description- Sends the requested pokemon's moveset in the required version.
+Description- Sends the requested pokemon's moveset in the required version.<br>
 Command - `dexy moveset <pokemon-name> <version-name> [learn-type]`
 <br>`<pokemon-name>` can be any Pokemon name. Hyphenate megas and gmax to the name. Same with forms.
 <br>`<version-name>` can be any complete version name such as `omegaruby` or can also be the version group initials `oras`.
