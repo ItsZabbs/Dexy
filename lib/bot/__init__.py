@@ -85,7 +85,7 @@ class Bot(commands.Bot):
         print("jishaku loaded")
         print("setup complete")
     async def start(self) -> None:
-        await super().start("ODM0NDExMjMyMzQxMTMxMzA1.YIAgBA.zscGvvl5uI9CSiTsxvWNaJv5lpE", reconnect=True)
+        await super().start(token, reconnect=True)
     # def run(self, version):
 
     #     print("running setup...")
