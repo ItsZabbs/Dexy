@@ -21,8 +21,10 @@ class Meta(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self._message = "watching for dexy help | Report any errors to Zabbs#4573!"
+        self._message = "watching for dexy help | Report any errors to Zabbs#6530!"
     async def cog_check(self, ctx):
+        if ctx.command.name=="stats":
+            return True
         return ctx.author.id==650664682046226432
     @commands.command(name='leaveguild')
     async def leaveguild(self,ctx,GuildID:Optional[discord.Guild]):
@@ -56,94 +58,94 @@ class Meta(commands.Cog):
         self.message = text
         await self.set()
 
-    @commands.command(name='load', hidden=True)
-    async def cogload(self, ctx, *, cog: str):
-        """Command which Loads a Module.
-        Remember to use dot path. e.g: cogs.owner"""
+    # @commands.command(name='load', hidden=True)
+    # async def cogload(self, ctx, *, cog: str):
+    #     """Command which Loads a Module.
+    #     Remember to use dot path. e.g: cogs.owner"""
 
-        try:
-            self.bot.load_extension(cog)
-        except Exception as e:
-            await ctx.send(f'**ERROR:** {type(e).__name__} - {e}')
-        else:
-            await ctx.send('**SUCCESS**')
+    #     try:
+    #         self.bot.load_extension(cog)
+    #     except Exception as e:
+    #         await ctx.send(f'**ERROR:** {type(e).__name__} - {e}')
+    #     else:
+    #         await ctx.send('**SUCCESS**')
 
-    @commands.command(name='unload', hidden=True)
-    async def cogunload(self, ctx, *, cog: str):
-        """Command which Unloads a Module.
-        Remember to use dot path. e.g: cogs.owner"""
+    # @commands.command(name='unload', hidden=True)
+    # async def cogunload(self, ctx, *, cog: str):
+    #     """Command which Unloads a Module.
+    #     Remember to use dot path. e.g: cogs.owner"""
 
-        try:
-            self.bot.unload_extension(cog)
-        except Exception as e:
-            await ctx.send(f'**ERROR:** {type(e).__name__} - {e}')
-        else:
-            await ctx.send('**SUCCESS**')
+    #     try:
+    #         self.bot.unload_extension(cog)
+    #     except Exception as e:
+    #         await ctx.send(f'**ERROR:** {type(e).__name__} - {e}')
+    #     else:
+    #         await ctx.send('**SUCCESS**')
 
-    @commands.command(
-        name='reload'
-    )
-    async def reload(self, ctx, cog:Optional[commands.Cog]=None):
-        '''"Reload all/one of the bots cogs!"'''
-        if not cog:
-            # No cog, means we reload all cogs
-            async with ctx.typing():
-                embed = discord.Embed(
-                    title="Reloading all cogs!",
-                    color=0x808080,
-                    timestamp=ctx.message.created_at
-                )
-                for ext in os.listdir("./lib/cogs/"):
-                    if ext.endswith(".py") and not ext.startswith("_"):
-                        try:
-                            self.bot.unload_extension(f"lib.cogs.{ext[:-3]}")
-                            self.bot.load_extension(f"lib.cogs.{ext[:-3]}")
-                            embed.add_field(
-                                name=f"Reloaded: {ext}",
-                                value='\uFEFF',
-                                inline=False
-                            )
-                        except Exception as e:
-                            embed.add_field(
-                                name=f"Failed to reload: {ext}",
-                                value=e,
-                                inline=False
-                            )
-                        await asyncio.sleep(0.5)
-                await ctx.send(embed=embed)
-        else:
-            async with ctx.typing():
-                embed = discord.Embed(
-                    title="Reloading all cogs!",
-                    color=0x808080,
-                    timestamp=ctx.message.created_at
-                )
-                ext = f"{cog.lower()}.py"
-                if not os.path.exists(f"./lib/cogs/{ext}"):
-                    # if the file does not exist
-                    embed.add_field(
-                        name=f"Failed to reload: {ext}",
-                        value="This cog does not exist.",
-                        inline=False
-                    )
+    # @commands.command(
+    #     name='reload'
+    # )
+    # async def reload(self, ctx, cog:Optional[commands.Cog]=None):
+    #     '''"Reload all/one of the bots cogs!"'''
+    #     if not cog:
+    #         # No cog, means we reload all cogs
+    #         async with ctx.typing():
+    #             embed = discord.Embed(
+    #                 title="Reloading all cogs!",
+    #                 color=0x808080,
+    #                 timestamp=ctx.message.created_at
+    #             )
+    #             for ext in os.listdir("./lib/cogs/"):
+    #                 if ext.endswith(".py") and not ext.startswith("_"):
+    #                     try:
+    #                         self.bot.unload_extension(f"lib.cogs.{ext[:-3]}")
+    #                         self.bot.load_extension(f"lib.cogs.{ext[:-3]}")
+    #                         embed.add_field(
+    #                             name=f"Reloaded: {ext}",
+    #                             value='\uFEFF',
+    #                             inline=False
+    #                         )
+    #                     except Exception as e:
+    #                         embed.add_field(
+    #                             name=f"Failed to reload: {ext}",
+    #                             value=e,
+    #                             inline=False
+    #                         )
+    #                     await asyncio.sleep(0.5)
+    #             await ctx.send(embed=embed)
+    #     else:
+    #         async with ctx.typing():
+    #             embed = discord.Embed(
+    #                 title="Reloading all cogs!",
+    #                 color=0x808080,
+    #                 timestamp=ctx.message.created_at
+    #             )
+    #             ext = f"{cog.lower()}.py"
+    #             if not os.path.exists(f"./lib/cogs/{ext}"):
+    #                 # if the file does not exist
+    #                 embed.add_field(
+    #                     name=f"Failed to reload: {ext}",
+    #                     value="This cog does not exist.",
+    #                     inline=False
+    #                 )
 
-                elif ext.endswith(".py") and not ext.startswith("_"):
-                    try:
-                        self.bot.unload_extension(f"cogs.{ext[:-3]}")
-                        self.bot.load_extension(f"cogs.{ext[:-3]}")
-                        embed.add_field(
-                            name=f"Reloaded: {ext}",
-                            value='\uFEFF',
-                            inline=False
-                        )
-                    except Exception:
-                        desired_trace = traceback.format_exc()
-                        embed.add_field(
-                            name=f"Failed to reload: {ext}",
-                            value=desired_trace,
-                            inline=False
-                        )
-                await ctx.send(embed=embed)
+    #             elif ext.endswith(".py") and not ext.startswith("_"):
+    #                 try:
+    #                     self.bot.unload_extension(f"cogs.{ext[:-3]}")
+    #                     self.bot.load_extension(f"cogs.{ext[:-3]}")
+    #                     embed.add_field(
+    #                         name=f"Reloaded: {ext}",
+    #                         value='\uFEFF',
+    #                         inline=False
+    #                     )
+    #                 except Exception:
+    #                     desired_trace = traceback.format_exc()
+    #                     embed.add_field(
+    #                         name=f"Failed to reload: {ext}",
+    #                         value=desired_trace,
+    #                         inline=False
+    #                     )
+    #             await ctx.send(embed=embed)
 
     @commands.command(name="stats")
     async def show_bot_stats(self, ctx):
@@ -171,9 +173,13 @@ class Meta(commands.Cog):
 
         for name, value, inline in fields:
             embed.add_field(name=name, value=value, inline=inline)
-
+        embed.set_footer(text="Wanted to see a Pokemon's stats? Try using the litedex command!")
         await ctx.send(embed=embed)
-
+    
+    @show_bot_stats.error
+    async def stats_error(self,ctx,error):
+        if isinstance(error,commands.CheckFailure):
+            await ctx.send("This command is reserved for the bot developer. You should try using the `ldex` command instead!")
     @commands.command(name="shutdown")
     async def shutdown(self, ctx):
         '''Shuts down the bot'''

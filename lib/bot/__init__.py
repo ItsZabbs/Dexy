@@ -17,6 +17,7 @@ feedback_channel_id=os.getenv("FEEDBACK_ID")
 guild_logs_id=os.getenv('GUILD_LOG_ID')
 
 intents = discord.Intents.default()
+intents.message_content=True
 
 # Allowing mentions in messages of the bot
 mentions = discord.AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
@@ -30,18 +31,19 @@ OWNER_ID = 650664682046226432
 prefix_cache={}
 
 async def get_prefix(user,message):
+    #return commands.when_mentioned_or("dd")(user, message)
     if message.guild is None:
         prefix = "dexy"
         return commands.when_mentioned_or(prefix)(user, message)
     elif message.guild.id in prefix_cache:
         return commands.when_mentioned_or(*prefix_cache[message.guild.id])(user, message)
     else:
-        prefix=db.field("SELECT Prefix FROM guilds WHERE GuildID = ?",message.guild.id)
-    try:
+        prefix:str=db.field("SELECT Prefix FROM guilds WHERE GuildID = ?",message.guild.id)
+    if prefix:
         prefix=prefix.split(",")
-    except:
+    else:
         prefix=['dexy']
-    if len(prefix_cache)>120:
+    if len(prefix_cache)>150:
         prefix_cache.pop(tuple(prefix_cache.keys())[0])
     prefix_cache[message.guild.id]=prefix
     return commands.when_mentioned_or(*prefix_cache[message.guild.id])(user, message)
@@ -67,28 +69,31 @@ class Bot(commands.Bot):
                          owner_id=OWNER_ID,max_messages=None)
 
 
-    def setup(self):
+    async def setup_hook(self):
+        
         for ext in os.listdir("./lib/cogs"):
             if ext.endswith(".py") and not ext.startswith("_"):
                 try:
-                    self.load_extension(f"lib.cogs.{ext[:-3]}")
+                    await self.load_extension(f"lib.cogs.{ext[:-3]}")
                     print(f" {ext[:-3]} cog loaded")
                 except Exception:
                     desired_trace = traceback.format_exc()
                     print(desired_trace)
+                    
         print("setup complete")
-        self.load_extension('jishaku')
+        await self.load_extension('jishaku')
         print("jishaku loaded")
         print("setup complete")
+    async def start(self) -> None:
+        await super().start("ODM0NDExMjMyMzQxMTMxMzA1.YIAgBA.zscGvvl5uI9CSiTsxvWNaJv5lpE", reconnect=True)
+    # def run(self, version):
 
-    def run(self, version):
+    #     print("running setup...")
+    #     self.setup()
 
-        print("running setup...")
-        self.setup()
+    #     print("running bot...")
 
-        print("running bot...")
-
-        super().run(self.TOKEN, reconnect=True)
+    #     super().run(self.TOKEN, reconnect=True)
 
     async def process_commands(self, message):
         ctx = await self.get_context(message, cls=commands.Context)
@@ -114,20 +119,37 @@ class Bot(commands.Bot):
     async def on_disconnect(self):
         print("bot disconnected")
 
-    async def on_command_error(self, ctx:commands.Context, err):
-        embed=discord.Embed(title='An error occurred',colour=ctx.me.colour)
-        embed.add_field(name='Error description',value=f"```\n{err}\n```",inline=False)
-        embed.add_field(name='Still confused?',value='Join the [support server](https://discord.gg/FBFTYp7nnq) and ask about this there!')
-        try:
-            await ctx.send(embed=embed)#f"Something went wrong \n ```\n{err}\n```")
-        except:
-            await ctx.author.send(f"I cannot send embeds or messages in {ctx.channel.mention}!")
-        try:
-            embed=discord.Embed(title='Error',description=f'{err}')
-            embed.add_field(name='Command used -',value=f'{ctx.message.content}',inline=False)
-            await self.error_webhook.send(embed=embed)
-        except:
-            raise err
+    # async def on_command_error(self, ctx:commands.Context, err):
+    #     embed=discord.Embed(title='An error occurred',colour=ctx.me.colour)
+    #     embed.add_field(name='Error description',value=err,inline=False)
+    #     value='Ask about this in the [support server](https://discord.gg/FBFTYp7nnq)'
+    #     try:
+    #         url=ctx.command.extras["url"]
+    #         value=value+f' \n or you can check the [wiki](https://ItsZabbs.github.io/Pokedex-Bot#{url})'
+    #     except:
+    #         pass
+    #     embed.add_field(name='Still confused?',value=value)
+    #     try:
+    #         perms=ctx.channel.permissions_for(ctx.guild.me)
+    #         if perms.send_messages and perms.embed_links:
+    #             await ctx.send(embed=embed)#f"Something went wrong \n ```\n{err}\n```")
+    #         elif perms.send_messages:
+    #             await ctx.send("Please ensure that I have the SEND MESSAGES and EMBED LINKS permissions here")
+    #         elif not perms.send_messages:
+    #             await ctx.author.send(f"Please ensure that I have the SEND MESSAGES and EMBED LINKS permissions in {ctx.channel.mention} ")
+    #     except:
+    #         try:
+    #             await ctx.author.send(f"I cannot send embeds or messages in {ctx.channel.mention}!\n Please ensure that I have the SEND MESSAGES and EMBED LINKS permissions for that channel.")
+    #         except:
+    #             pass
+    #     try:
+    #         embed=discord.Embed(title='Error',description=f'{err}')
+    #         embed.add_field(name='Command used -',value=f'{ctx.message.content}',inline=False)
+    #         embed.add_field(name='Command user - ',value=f"{ctx.author.id}",inline=False)
+    #         await self.error_webhook.send(embed=embed)
+    #     except:
+    #         raise err
+
     async def on_guild_join(self, guild:discord.Guild):
         try:
             db.execute("INSERT INTO guilds (GuildID) VALUES (?)", guild.id)
@@ -146,6 +168,8 @@ class Bot(commands.Bot):
     #     db.execute("DELETE FROM guilds WHERE GuildID = ?", guild.id)
     async def on_message(self, message:discord.Message):
         if message.author.bot:return
+        if message.author == self.user:return
+        #if message.author.id!=650664682046226432:return
         return await super().on_message(message)
     async def on_ready(self):
         await update()
