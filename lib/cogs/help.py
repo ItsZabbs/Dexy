@@ -169,7 +169,7 @@ category\n Or use {self.clean_prefix(ctx)} help <command> for more info on a com
         filtered_list=await self.filter_commands(commands)
         if filtered_list:
             for e in filtered_list:
-                helper=e.help.split('\n')[0] if e.help else "No Help provided"
+                #helper=e.help.split('\n')[0] if e.help else "No Help provided"
                 helper=e.help.split("\n")[0].replace("[prefix]",self.clean_prefix(ctx)) if e.help else "No Help provided"
                 embed.add_field(name=e.name,value=f"`{helper}`",inline=False)
             embed=support_field(embed,group.extras.get("url",""))
@@ -182,7 +182,7 @@ category\n Or use {self.clean_prefix(ctx)} help <command> for more info on a com
         signature=self.get_command_signature(command)
         arg_desc=""
         for name,argument in command.clean_params.items():
-            arg_desc=arg_desc+"\n"+"`"+name+"`: "+(argument.description or "")
+            arg_desc=arg_desc+"\n"+"`"+name+"`: "+(argument.description or "No Help provided")
         embed=discord.Embed(title=f'Information on `{command.name}`',description=f"```\n{command.help}\n```",colour=ctx.me.colour if ctx.me.colour!=discord.Color.default() else discord.Colour.blurple())
         embed.set_author(name=f'{ctx.me.name} Help Dialogue!')
         embed.set_footer(text=f'Use {self.clean_prefix(ctx)} help <category> for more info on a \
