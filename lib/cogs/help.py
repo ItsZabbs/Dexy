@@ -45,13 +45,8 @@ class SelectNew(discord.ui.Select):
         super().__init__(placeholder="Select an option",max_values=1,min_values=1,options=options,custom_id="new_help")
     async def callback(self, interaction: discord.Interaction):
         return self.values[0]
-class CustomView(ui.View):
-    def list_of_options(self,options:list)->None:
-        self.list_of_options=options
-    def get_list_of_options(self)->list:
-        return self.list_of_options
 
-class MyMenuPages(CustomView, menus.MenuPages):
+class MyMenuPages(ui.View, menus.MenuPages):
     def __init__(self, source, *, delete_message_after=False):
         super().__init__(timeout=60)
         self._source = source
@@ -119,9 +114,6 @@ class MyHelp(commands.MinimalHelpCommand):
         return command.short_doc or "Command is not documented."
     def clean_prefix(self,ctx:commands.Context):
         return ctx.clean_prefix if hasattr(ctx,"clean_prefix") else "dexy "
-    def support_field(embed:discord.Embed,name="")->discord.Embed:
-        embed.add_field(name='\u200b',value=f'Ask about anything in the [support server](https://discord.gg/FBFTYp7nnq)\n or check the [wiki](https://itszabbs.github.io/Pokedex-Bot#{name}) for detailed documentation')
-        return embed
     def get_destination(self) -> commands.Context:
         return self.context
     async def send_bot_help(self, mapping):
@@ -156,7 +148,8 @@ category\n Or use {self.clean_prefix(ctx)} help <command> for more info on a com
         filtered_list=await self.filter_commands(command,sort=True)
         if filtered_list:
             for e in filtered_list:
-                helper=e.help.split('\n')[0] if e.help else "No Help provided"
+                #helper=e.help.split('\n')[0] if e.help else "No Help provided"
+                helper=e.help.split("\n")[0].replace("[prefix]",self.clean_prefix(ctx)) if e.help else "No Help provided"
                 embed.add_field(name=e.name,value=f"{helper}",inline=False)
             try:
                 url=cog.url
@@ -177,6 +170,7 @@ category\n Or use {self.clean_prefix(ctx)} help <command> for more info on a com
         if filtered_list:
             for e in filtered_list:
                 helper=e.help.split('\n')[0] if e.help else "No Help provided"
+                helper=e.help.split("\n")[0].replace("[prefix]",self.clean_prefix(ctx)) if e.help else "No Help provided"
                 embed.add_field(name=e.name,value=f"`{helper}`",inline=False)
             embed=support_field(embed,group.extras.get("url",""))
             await ctx.send(embed=embed)
@@ -188,7 +182,7 @@ category\n Or use {self.clean_prefix(ctx)} help <command> for more info on a com
         signature=self.get_command_signature(command)
         arg_desc=""
         for name,argument in command.clean_params.items():
-            arg_desc=arg_desc+"\n"+"`"+name+"`: "+argument.description
+            arg_desc=arg_desc+"\n"+"`"+name+"`: "+(argument.description or "")
         embed=discord.Embed(title=f'Information on `{command.name}`',description=f"```\n{command.help}\n```",colour=ctx.me.colour if ctx.me.colour!=discord.Color.default() else discord.Colour.blurple())
         embed.set_author(name=f'{ctx.me.name} Help Dialogue!')
         embed.set_footer(text=f'Use {self.clean_prefix(ctx)} help <category> for more info on a \
