@@ -97,8 +97,6 @@ messages=['Help in keeping the bot up! [Donate](https://buymeacoffee.com/Zabbs "
 async def embed_this_please(embed:discord.Embed):
     if random.randint(1,30)==1:
         embed.add_field(name="It also seems that you're enjoying the bot...",value=f'Care to write a review on [top.gg](https://top.gg/bot/853556227610116116)?\n {random.choice(messages)}')
-    embed.set_footer(text="The bot has undergone some changes. PLEASE read it's about me for more info. \n\
-        You can also join the support server to be informed of any updates and downtimes.")
     return embed
 async def get_pokedex_stuff(pokemon_dict, lite=False):
     stats = []
@@ -126,7 +124,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
     abilities = ", ".join(abilities)
     if not lite:
 
-        types = " , ".join(pokemon_dict["types"])
+        types = " ,".join(pokemon_dict["types"])
         if len(pokemon_dict["types"]) == 1:
             multipleTypes = "Type"
         else:
@@ -167,7 +165,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
                 genderRatio = pokemon_dict["gender"]
                 genderRatio="No Gender" if genderRatio=="N" else "Male" if genderRatio=="M" else "Female"
             except KeyError:
-                genderRatio = "50% for both genders"
+                genderRatio = "M: 50%, F: 50%"
         if genderRatio != "":
             # third field is gender
             embed.add_field(name="**Gender Percentage**",
@@ -249,8 +247,8 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
                 f"[Smogon](https://www.smogon.com/dex/ss/pokemon/{name}/)")
             urllist.append(
                 f"[Serebii](https://www.serebii.net/pokemon/{name})")
-        embed.add_field(name="**Height**", value=f"{height} m", inline=False)
-        embed.add_field(name="**Weight**", value=f"{weight} kg", inline=True)
+        embed.add_field(name="**Height**", value=f"{height}m", inline=False)
+        embed.add_field(name="**Weight**", value=f"{weight}kg", inline=True)
         embed.add_field(name="**Smogon Tier**", value=f"{tier}", inline=True)
         embed.add_field(
             name=f"**{Egg}**", value=f"{', '.join(pokemon_dict['eggGroups'])}", inline=False)
@@ -1097,7 +1095,7 @@ class Pokemon(commands.Cog):
             ls.append(d)
             bylevel.update({l:ls})
         colour=discord.Color.from_rgb(*colour)
-        embed=discord.Embed(title=f'{name.capitalize()}',description=f'Move method - {" ".join([e.capitalize() for e in movemethod.split("-")])} \n Game - {", ".join(e.capitalize() if len(e.split())==0 else " ".join([i.capitalize() for i in e.split(" ")]) for e in game_name)}',colour=colour)
+        embed=discord.Embed(title=f'{name.capitalize()}',description=f'Move method - {" ".join([e.capitalize() for e in movemethod.split("-")])} \nGame - {", ".join(e.capitalize() if len(e.split())==0 else " ".join([i.capitalize() for i in e.split(" ")]) for e in game_name)}',colour=colour)
         for k,v in bylevel.items():
             n=[]
             for i in v:
