@@ -24,14 +24,13 @@ class HelpPageSource(menus.ListPageSource):
         return f"**{key}**",value
     async def format_page(self, menu, entries:dict[str,dict[str,str]]):
         page = menu.current_page
+        menu.ctx.author:discord.Member=menu.ctx.author
         max_page = self.get_max_pages()
-        starting_number = page * self.per_page + 1
         page_content = "**"+tuple(entries.keys())[0]+":**"
-    
         embed = discord.Embed(
             title=f"Pokedex Bot Help Dialogue ({page + 1}/{max_page})", 
             description=f"Currently viewing help for {page_content}",
-            color=discord.Colour.blurple() if menu.ctx.author.colour==discord.Color.from_rgb(0,0,0) else menu.ctx.author.colour
+            color=discord.Colour.blurple() if menu.ctx.author.colour.value else menu.ctx.author.colour
         )
         for command,help_string in tuple(entries.values())[0].items():
             embed.add_field(name="**"+command+"**",value=help_string,inline=False)
@@ -58,8 +57,7 @@ class MyMenuPages(ui.View, menus.MenuPages):
         self.select_menu.disabled=True
         for button in self.children:
             button.disabled=True
-        self.message:discord.Message
-        return await self.message.edit(content=self.message.content,embeds=self.message.embeds,view=self)
+        return await self.message.edit(view=self)
     async def send_initial_message(self, ctx, channel):
         return await super().send_initial_message(ctx, channel)
     async def start(self, ctx, *, channel=None, wait=False):
@@ -67,7 +65,6 @@ class MyMenuPages(ui.View, menus.MenuPages):
         self.ctx = ctx
         self.message = await self.send_initial_message(ctx, ctx.channel)
     async def _get_kwargs_from_page(self, page):
-        """This method calls ListPageSource.format_page class"""
         value = await super()._get_kwargs_from_page(page)
         if 'view' not in value:
             value.update({'view': self})
@@ -150,7 +147,7 @@ category\n Or use {self.clean_prefix(ctx)} help <command> for more info on a com
             for e in filtered_list:
                 #helper=e.help.split('\n')[0] if e.help else "No Help provided"
                 helper=e.help.split("\n")[0].replace("[prefix]",self.clean_prefix(ctx)) if e.help else "No Help provided"
-                embed.add_field(name=e.name,value=f"{helper}",inline=False)
+                embed.add_field(name=e.name,value=helper,inline=False)
             try:
                 url=cog.url
             except:
@@ -171,7 +168,7 @@ category\n Or use {self.clean_prefix(ctx)} help <command> for more info on a com
             for e in filtered_list:
                 #helper=e.help.split('\n')[0] if e.help else "No Help provided"
                 helper=e.help.split("\n")[0].replace("[prefix]",self.clean_prefix(ctx)) if e.help else "No Help provided"
-                embed.add_field(name=e.name,value=f"`{helper}`",inline=False)
+                embed.add_field(name=e.name,value=helper,inline=False)
             embed=support_field(embed,group.extras.get("url",""))
             await ctx.send(embed=embed)
         else:

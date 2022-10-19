@@ -151,7 +151,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
         else:
             embed = discord.Embed(
                 title=name, colour=discord.Color.from_rgb(*colour))
-        embed.add_field(name=f"{multipleTypes}", value=f'{types}', inline=True)
+        embed.add_field(name=f"**{multipleTypes}**", value=f'{types}', inline=True)
 
         try:
             genderRatio = pokemon_dict["genderRatio"]
@@ -249,7 +249,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
                 f"[Serebii](https://www.serebii.net/pokemon/{name})")
         embed.add_field(name="**Height**", value=f"{height}m", inline=False)
         embed.add_field(name="**Weight**", value=f"{weight}kg", inline=True)
-        embed.add_field(name="**Smogon Tier**", value=f"{tier}", inline=True)
+        embed.add_field(name="**Smogon Tier**", value=tier, inline=True)
         embed.add_field(
             name=f"**{Egg}**", value=f"{', '.join(pokemon_dict['eggGroups'])}", inline=False)
         embed.add_field(name='**External Resources**',
@@ -265,13 +265,12 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             multipleTypes = "Types"
         try:
             embed.set_thumbnail(url=serebii+pokemon_dict['url']+".png")
-            #embed.set_footer(text="Please report any wrong artwork/icons using the `feedback` command!")
         except:
             pass
-        embed.add_field(name='**Types**', value=f'{types}', inline=False)
+        embed.add_field(name='**Types**', value=types, inline=False)
         embed.add_field(name='**Abilities**',
-                        value=f'{abilities}', inline=True)
-        embed.add_field(name='**Stats**', value=f'{stats}', inline=False)
+                        value=abilities, inline=True)
+        embed.add_field(name='**Stats**', value=stats, inline=False)
         return embed
 
 
@@ -567,7 +566,7 @@ class Pokemon(commands.Cog):
         nospacesname = (name.replace(" ", "")).lower()
         urldict.append(
             f"[Serebii](https://www.serebii.net/abilitydex/{nospacesname}.shtml)")
-        embed = discord.Embed(title=f'{abil_dict["name"]}', description="No flavour text" if abil_flav_dict.get(str(abil_dict['num']),"No flavour text")=="No flavour text" else abil_flav_dict.get(str(abil_dict['num']))[-1] , colour=discord.Color.blurple())
+        embed = discord.Embed(title=abil_dict["name"], description="No flavour text" if abil_flav_dict.get(str(abil_dict['num']),"No flavour text")=="No flavour text" else abil_flav_dict.get(str(abil_dict['num']))[-1] , colour=discord.Color.blurple())
         embed.add_field(name='Smogon Rating',
                         value=f"{abil_rating_dict[int(abil_dict['rating'])]} ({abil_dict['rating']})", inline=True)
         embed.add_field(name='External Resources',
