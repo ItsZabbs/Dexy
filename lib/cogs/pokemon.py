@@ -19,7 +19,7 @@ from ..db import db
 type_emoji_dict = {'bug': '<:bug:985953221409394759>', 'dark': '<:dark:985953337256071199>', 'dragon': '<:dragon:985953408575995914>', 'electric': '<:electric:985953515681767465>', 'fairy': '<:fairy:985953654093795338>', 'fighting': '<:fighting:985953721735323678>', 'fire': '<:fire:985955119755567125>', 'flying': '<:flying:985955123303948358>', 'ghost': '<:ghost:985955415315595284>',
                    'grass': '<:grass:985955439734841394>', 'ground': '<:ground:985955963309813781>', 'ice': '<:ice:985955967600574525>', 'normal': '<:normal:985955971094417478>', 'poison': '<:poison:985955973178986537>', 'psychic': '<:psychic:985956204993978439>', 'rock': '<:rock:985956212388548668>', 'steel': '<:steel:985956509156515920>', 'water': '<:water:985956512679735328>'}
 version_names = ['Red, Blue', 'Yellow', 'Gold, Silver', 'Crystal', 'Ruby, Sapphire', 'Emerald', 'Firered, Leafgreen', 'Diamond, Pearl', 'Platinum', 'Heartgold, Soulsilver', 'Black, White', 'Colosseum',
-                 'Xd', 'Black 2, White 2', 'X, Y', 'Omega Ruby, Alpha Sapphire', 'Sun, Moon', 'Ultra Sun, Ultra Moon', 'Lets Go Pikachu, Lets Go Eevee', 'Sword, Shield', 'Brilliant Diamond, Shining Pearl','Legends Arceus']
+                 'Xd', 'Black 2, White 2', 'X, Y', 'Omega Ruby, Alpha Sapphire', 'Sun, Moon', 'Ultra Sun, Ultra Moon', 'Lets Go Pikachu, Lets Go Eevee', 'Sword, Shield', 'Brilliant Diamond, Shining Pearl','Legends Arceus,']
 serebii="https://www.serebii.net/pokemon/art/"
 back_dict = {'afd': 'afd-back', 'none': 'ani-back', 'gen1': 'gen1-back', 'rgb': 'gen1rgb-back', 'gen2': 'gen2-back',
             'gen3': 'gen3-back', 'rb': 'gen3-back', 'pt': 'gen4-back', 'bw': 'gen5-back', 'bwani': 'gen5ani-back'}
