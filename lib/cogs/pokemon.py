@@ -1072,7 +1072,10 @@ class Pokemon(commands.Cog):
             version_num=version_dict[version_num[0]]
         else:
             keys=tuple(version_dict.keys())
-            values=tuple(version_dict.values()).index(version_num)
+            try:
+                values=tuple(version_dict.values()).index(version_num)
+            except ValueError:#PLA IS 99
+                values=tuple(version_dict.values()).index(-1)
             game_name=keys[values].split("-")
         learn_type_redefined=difflib.get_close_matches(learn_type,learn_list.keys(),n=1,cutoff=0.1)
         if not len(learn_type_redefined):
