@@ -19,14 +19,14 @@ from ..db import db
 type_emoji_dict = {'bug': '<:bug:985953221409394759>', 'dark': '<:dark:985953337256071199>', 'dragon': '<:dragon:985953408575995914>', 'electric': '<:electric:985953515681767465>', 'fairy': '<:fairy:985953654093795338>', 'fighting': '<:fighting:985953721735323678>', 'fire': '<:fire:985955119755567125>', 'flying': '<:flying:985955123303948358>', 'ghost': '<:ghost:985955415315595284>',
                    'grass': '<:grass:985955439734841394>', 'ground': '<:ground:985955963309813781>', 'ice': '<:ice:985955967600574525>', 'normal': '<:normal:985955971094417478>', 'poison': '<:poison:985955973178986537>', 'psychic': '<:psychic:985956204993978439>', 'rock': '<:rock:985956212388548668>', 'steel': '<:steel:985956509156515920>', 'water': '<:water:985956512679735328>'}
 version_names = ['Red, Blue', 'Yellow', 'Gold, Silver', 'Crystal', 'Ruby, Sapphire', 'Emerald', 'Firered, Leafgreen', 'Diamond, Pearl', 'Platinum', 'Heartgold, Soulsilver', 'Black, White', 'Colosseum',
-                 'Xd', 'Black 2, White 2', 'X, Y', 'Omega Ruby, Alpha Sapphire', 'Sun, Moon', 'Ultra Sun, Ultra Moon', 'Lets Go Pikachu, Lets Go Eevee', 'Sword, Shield', 'Brilliant Diamond, Shining Pearl','Legends Arceus,']
+                 'Xd', 'Black 2, White 2', 'X, Y', 'Omega Ruby, Alpha Sapphire', 'Sun, Moon', 'Ultra Sun, Ultra Moon', 'Lets Go Pikachu, Lets Go Eevee', 'Sword, Shield', 'Brilliant Diamond, Shining Pearl','Legends Arceus']
 serebii="https://www.serebii.net/pokemon/art/"
 back_dict = {'afd': 'afd-back', 'none': 'ani-back', 'gen1': 'gen1-back', 'rgb': 'gen1rgb-back', 'gen2': 'gen2-back',
             'gen3': 'gen3-back', 'rb': 'gen3-back', 'pt': 'gen4-back', 'bw': 'gen5-back', 'bwani': 'gen5ani-back'}
 normal_dict = {'bw': 'gen5', 'bwani': 'gen5ani', 'none': 'ani', 'afd': 'afd', 'hgss':'gen4','pt': 'gen4dp-2', 'dp': 'gen4dp',
             'gen3': 'gen3', 'rs': 'gen3rs', 'frlg': 'gen3frlg', 'gold': 'gen2g', 'silver': 'gen2s',
             'crystal': 'gen2', 'rb': 'gen1rb', 'rg': 'gen1rg', 'yellow': 'gen1', 'gen1': 'gen1','gen5':'gen5','gen4':'gen4'}
-version_dict={'red-blue': '1', 'yellow': '2', 'gold-silver': '3', 'crystal': '4', 'ruby-sapphire': '5', 'emerald': '6', 'firered-leafgreen': '7', 'diamond-pearl': '8', 'platinum': '9', 'heartgold-soulsilver': '10', 'black-white': '11', 'colosseum': '12', 'xd': '13', 'black 2-white 2': '14', 'x-y': '15', 'omega ruby-alpha sapphire': '16', 'sun-moon': '17', 'ultra sun-ultra moon': '18', 'lets go pikachu-lets go eevee': '19', 'sword-shield': '20','brilliant diamond-shining pearl':'21','legends-arceus':'99'}
+version_dict={'red-blue': '1', 'yellow': '2', 'gold-silver': '3', 'crystal': '4', 'ruby-sapphire': '5', 'emerald': '6', 'firered-leafgreen': '7', 'diamond-pearl': '8', 'platinum': '9', 'heartgold-soulsilver': '10', 'black-white': '11', 'colosseum': '12', 'xd': '13', 'black 2-white 2': '14', 'x-y': '15', 'omega ruby-alpha sapphire': '16', 'sun-moon': '17', 'ultra sun-ultra moon': '18', 'lets go pikachu-lets go eevee': '19', 'sword-shield': '20','brilliant diamond-shining pearl':'21','legends arceus':'99'}
 initial_dict={'rb': '1', 'y': '2', 'gs': '3', 'c': '4', 'rs': '5', 'e': '6', 'frlg': '7', 'dp': '8', 'pt': '9', 'hgss': '10', 'bw': '11', 'co': '12', 'xd': '13', 'b2w2': '14', 'xy': '15', 'oras': '16', 'sm': '17', 'usum': '18', 'lgp': '19','lge': '19', 'swsh': '20','bdsp':'21','pla':'99'}
 learn_list={'level-up': {'id': 1}, 'egg': {'id': 2}, 'tutor': {'id': 3}, 'tm': {'id': 4},'technical machine':{'id':4}, 'stadium-surfing-pikachu': {'id': 5}, 'light-ball-egg': {'id': 6}, 'colosseum-purification': {'id': 7}, 'xd-shadow': {'id': 8}, 'xd-purification': {'id': 9}, 'form-change': {'id': 10}, 'zygarde-cube': {'id': 11}}
 type_dict = {1: ('Normal', (168, 168, 120)), 2: ('Fighting', (192, 48, 40)), 3: ('Flying', (168, 144, 240)),
@@ -1094,7 +1094,7 @@ class Pokemon(commands.Cog):
             ls.append(d)
             bylevel.update({l:ls})
         colour=discord.Color.from_rgb(*colour)
-        embed=discord.Embed(title=f'{name.capitalize()}',description=f'Move method - {" ".join([e.capitalize() for e in movemethod.split("-")])} \nGame - {", ".join(e.capitalize() if len(e.split())==0 else " ".join([i.capitalize() for i in e.split(" ")]) for e in game_name)}',colour=colour)
+        embed=discord.Embed(title=name.capitalize(),description=f'Move method - {" ".join([e.capitalize() for e in movemethod.split("-")])} \nGame - {", ".join(e.capitalize() if len(e.split())==0 else " ".join([i.capitalize() for i in e.split(" ")]) for e in game_name)}',colour=colour)
         for k,v in bylevel.items():
             n=[]
             for i in v:
