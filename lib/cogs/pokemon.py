@@ -1,21 +1,20 @@
-import gc
-import json
-import discord
-from typing import Dict,List, Optional
-from discord.ext import commands,tasks
-from discord.ext.commands import parameter
-from discord import app_commands
 import difflib
+import gc
 import random
-from typing import Tuple
+import re
 from copy import deepcopy
+from typing import Dict, List, Optional, Tuple
 
 import aiohttp
-import re
-
+import discord
+import ujson as json
+from discord import app_commands
+from discord.ext import commands, tasks
+from discord.ext.commands import parameter
 from lib.bot import Bot
 
 from ..db import db
+
 type_emoji_dict = {'bug': '<:bug:985953221409394759>', 'dark': '<:dark:985953337256071199>', 'dragon': '<:dragon:985953408575995914>', 'electric': '<:electric:985953515681767465>', 'fairy': '<:fairy:985953654093795338>', 'fighting': '<:fighting:985953721735323678>', 'fire': '<:fire:985955119755567125>', 'flying': '<:flying:985955123303948358>', 'ghost': '<:ghost:985955415315595284>',
                    'grass': '<:grass:985955439734841394>', 'ground': '<:ground:985955963309813781>', 'ice': '<:ice:985955967600574525>', 'normal': '<:normal:985955971094417478>', 'poison': '<:poison:985955973178986537>', 'psychic': '<:psychic:985956204993978439>', 'rock': '<:rock:985956212388548668>', 'steel': '<:steel:985956509156515920>', 'water': '<:water:985956512679735328>'}
 version_names = ['Red, Blue', 'Yellow', 'Gold, Silver', 'Crystal', 'Ruby, Sapphire', 'Emerald', 'Firered, Leafgreen', 'Diamond, Pearl', 'Platinum', 'Heartgold, Soulsilver', 'Black, White', 'Colosseum',
