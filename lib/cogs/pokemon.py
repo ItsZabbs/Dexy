@@ -124,7 +124,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
     abilities = ", ".join(abilities)
     if not lite:
 
-        types = " ,".join(pokemon_dict["types"])
+        types = ", ".join(pokemon_dict["types"])
         if len(pokemon_dict["types"]) == 1:
             multipleTypes = "Type"
         else:
@@ -258,7 +258,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
     else:
         embed = discord.Embed(
             title=" ".join(n.capitalize() for n in pokemon_dict["name"].replace("-"," ").split()), colour=discord.Color.from_rgb(*pokemon_dict["color"]))
-        types = " ,".join(pokemon_dict["types"])
+        types = ", ".join(pokemon_dict["types"])
         if len(pokemon_dict["types"]) == 1:
             multipleTypes = "Type"
         else:
