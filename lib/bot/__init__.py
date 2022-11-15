@@ -28,7 +28,7 @@ COGS = [path.split("\\")[-1][:-3] for path in glob("./lib/cogs/*.py")]
 OWNER_ID = 650664682046226432
 
 #Logging
-discord.utils.setup_logging(handler=logging.INFO)
+discord.utils.setup_logging(level=logging.INFO)
 
 # Prefix cache implementation
 prefix_cache={}
