@@ -690,14 +690,14 @@ class Pokemon(commands.Cog):
                 for e in set(repeatedTypes):
                     supereffectiveTo.remove(e)
                     ind = supereffectiveTo.index(e)
-                    supereffectiveTo[ind] = "**"+supereffectiveTo[ind]+"**"
+                    supereffectiveTo[ind] = "**__"+supereffectiveTo[ind]+"**__"
             if len(set(resistantFrom)) != len(resistantFrom):
                 repeatedTypes = [
                     x for x in resistantFrom if resistantFrom.count(x) > 1]
                 for e in set(repeatedTypes):
                     resistantFrom.remove(e)
                     ind = resistantFrom.index(e)
-                    resistantFrom[ind] = "**"+resistantFrom[ind]+"**"
+                    resistantFrom[ind] = "__**"+resistantFrom[ind]+"**__"
         for ind, e in enumerate(resistantFrom, start=0):
             if not e.endswith("(x0.25)"):
                 resistantFrom[ind] = e#+" (x0.5)"
@@ -751,7 +751,7 @@ class Pokemon(commands.Cog):
         embed=await embed_this_please(embed)
         if image_link:
             embed.set_thumbnail(url=image_link)
-        embed.set_footer(text='Bold indicates double weakness/resistance')
+        embed.set_footer(text='Bolded underline indicates double weakness/resistance')
         await ctx.send(embed=embed)
     
     @commands.hybrid_command(name='item',extras={"url":"items"})

@@ -4,7 +4,7 @@ import dotenv
 import os
 from glob import glob
 import traceback
-
+import logging
 
 from ..db import db
 
@@ -26,6 +26,9 @@ mentions = discord.AllowedMentions(everyone=False, users=True, roles=False, repl
 COGS = [path.split("\\")[-1][:-3] for path in glob("./lib/cogs/*.py")]
 # Owner IDS
 OWNER_ID = 650664682046226432
+
+#Logging
+discord.utils.setup_logging(handler=logging.INFO)
 
 # Prefix cache implementation
 prefix_cache={}
@@ -56,7 +59,7 @@ async def update():
         except:
             pass
 
-class Bot(commands.Bot):
+class Bot(commands.AutoShardedBot):
     def __init__(self):
         self.TOKEN = token
         self.ready = False
@@ -80,10 +83,7 @@ class Bot(commands.Bot):
                     desired_trace = traceback.format_exc()
                     print(desired_trace)
                     
-        print("setup complete")
         await self.load_extension('jishaku')
-        print("jishaku loaded")
-        print("setup complete")
     async def start(self) -> None:
         await super().start(token, reconnect=True)
     # def run(self, version):
@@ -113,11 +113,6 @@ class Bot(commands.Bot):
         self.guild_log:discord.TextChannel=await self.fetch_channel(guild_logs_id)
         self.guild_log=await self.guild_log.webhooks()
         self.guild_log=self.guild_log[0]
-        print("updated")
-        print("bot connected")
-        
-    async def on_disconnect(self):
-        print("bot disconnected")
 
     # async def on_command_error(self, ctx:commands.Context, err):
     #     embed=discord.Embed(title='An error occurred',colour=ctx.me.colour)
@@ -159,7 +154,7 @@ class Bot(commands.Bot):
         await self.guild_log.send(embed=embed)
     
     async def on_guild_remove(self, guild:discord.Guild):
-        embed=discord.Embed(title='Guild left',description=f'ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}')# OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
+        embed=discord.Embed(title='Guild left',description=f'ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\nOWNER USERNAME : {guild.owner}')# OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
         await self.guild_log.send(embed=embed)
     
     
@@ -174,7 +169,6 @@ class Bot(commands.Bot):
     async def on_ready(self):
         await update()
         self.ready = True
-        print("bot ready")
 
 
 bot = Bot()
