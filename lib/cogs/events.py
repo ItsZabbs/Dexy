@@ -30,11 +30,11 @@ class Events(commands.Cog):
             embed=discord.Embed(title='Error',description=err,colour=discord.Color.red())
             if ctx.interaction is None:
                 embed.add_field(name='Command used -',value=ctx.message.content,inline=False)
-                embed.add_field(name='Command user - ',value=ctx.author.id,inline=False)
+                embed.add_field(name='Command user - ',value=f"{ctx.author} {ctx.author.id}",inline=False)
                 await self.bot.error_webhook.send(embed=embed)
             else:
                 embed.add_field(name='Command used -\n',value=ctx.interaction.data["name"]+" "+" ".join([v["name"]+" = "+v["value"] for v in ctx.interaction.data.get("options",[])]),inline=False)
-                embed.add_field(name='Command user - ',value=ctx.interaction.user.id,inline=False)
+                embed.add_field(name='Command user - ',value=f"{ctx.interaction.user} {ctx.interaction.user.id}",inline=False)
                 await self.bot.error_webhook.send(embed=embed)
         except:
             raise err
