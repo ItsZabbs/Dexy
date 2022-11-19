@@ -16,7 +16,8 @@ error_channel_id = os.getenv("CHANNEL_ID")
 feedback_channel_id=os.getenv("FEEDBACK_ID")
 guild_logs_id=os.getenv('GUILD_LOG_ID')
 
-intents = discord.Intents.messages
+intents = discord.Intents
+intents.messages=True
 intents.guilds=True
 intents.message_content=True
 
