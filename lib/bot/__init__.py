@@ -147,17 +147,17 @@ class Bot(commands.AutoShardedBot):
     #     except:
     #         raise err
 
-    async def on_guild_join(self, guild:discord.Guild):
-        try:
-            db.execute("INSERT INTO guilds (GuildID) VALUES (?)", guild.id)
-        except:
-            pass
-        embed=discord.Embed(title='Guild added',description=f'ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME: {await self.user(guild.owner_id)}')#\n OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
-        await self.guild_log.send(embed=embed)
+    # async def on_guild_join(self, guild:discord.Guild):
+    #     try:
+    #         db.execute("INSERT INTO guilds (GuildID) VALUES (?)", guild.id)
+    #     except:
+    #         pass
+    #     embed=discord.Embed(title='Guild added',description=f'ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME: {await self.user(guild.owner_id)}')#\n OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
+    #     await self.guild_log.send(embed=embed)
     
-    async def on_guild_remove(self, guild:discord.Guild):
-        embed=discord.Embed(title='Guild left',description=f'ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME : {await self.user(guild.owner_id)}')# OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
-        await self.guild_log.send(embed=embed)
+    # async def on_guild_remove(self, guild:discord.Guild):
+    #     embed=discord.Embed(title='Guild left',description=f'ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME : {await self.user(guild.owner_id)}')# OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
+    #     await self.guild_log.send(embed=embed)
     
     
         
