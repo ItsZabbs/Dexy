@@ -10,11 +10,13 @@ from lib.db import db
 class Events(commands.Cog):
     def __init__(self,bot:Bot):
         self.bot=bot
+    @commands.Cog.listener()
     async def on_command_completion(self,ctx:commands.Context):
         embed=discord.Embed(title='Command completed',description=ctx.message.content if not ctx.interaction else ctx.interaction.data["name"]+" "+" ".join([v["name"]+" = "+v["value"] for v in ctx.interaction.data.get("options",[])]),colour=discord.Colour.blurple())
         embed.add_field(name='Command user',value=f"{ctx.author} - {ctx.author.id}",inline=False)
         embed.add_field(name='Guild',value=f"{ctx.guild} {ctx.guild.id if ctx.guild is not None else 'Was in DMs'}")
         await self.bot.command_webhook.send(embed=embed)
+    @commands.Cog.listener()
     async def on_guild_join(self, guild:discord.Guild):
         try:
             db.execute("INSERT INTO guilds (GuildID) VALUES (?)", guild.id)
@@ -22,7 +24,7 @@ class Events(commands.Cog):
             pass
         embed=discord.Embed(title='Guild added',description=f'ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME: {await self.bot.fetch_user(guild.owner_id)}',colour=discord.Color.green())#\n OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
         await self.bot.guild_webhook.send(embed=embed)
-    
+    @commands.Cog.listener()
     async def on_guild_remove(self, guild:discord.Guild):
         embed=discord.Embed(title='Guild left',description=f'ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME : {await self.bot.fetch_user(guild.owner_id)}',colour=discord.Color.red())# OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
         await self.bot.guild_webhook.send(embed=embed)
