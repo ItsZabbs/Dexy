@@ -26,7 +26,7 @@ intents.message_content=True
 mentions = discord.AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
 
 # Owner IDS
-OWNER_ID = os.getenv("OWNER_ID")
+OWNER_ID = int(os.getenv("OWNER_ID"))
 
 #Logging
 discord.utils.setup_logging(level=logging.INFO)
