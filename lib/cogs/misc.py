@@ -6,7 +6,9 @@ from time import time
 from discord.ext import tasks
 from discord.ext.commands.cooldowns import BucketType
 from random import choice
+
 from ..db import db
+from ..bot import Bot
 
 memes=['SPOILER_3.gif', 'SPOILER_1.jpg', 'SPOILER_2.gif']
 
@@ -16,9 +18,8 @@ class Misc(commands.Cog):
     def check_meme_server(ctx:commands.Context):
         if ctx.guild==None:return False
         return ctx.guild.id==857700650992795648
-    def __init__(self, bot):
+    def __init__(self, bot:Bot):
         self.bot = bot
-        self.feedback_webhook=int(bot.feedback_webhook)
         self.presence_update.start()
     def cog_unload(self):
         self.presence_update.cancel()
@@ -103,16 +104,12 @@ class Misc(commands.Cog):
     @app_commands.describe(feedback="The feedback you want to send!",private="If you want others to see your feedback")
     async def feedback(self,ctx:Union[commands.Context,discord.Interaction],*,feedback,private:Optional[bool]=True):
         '''Any kind of feedback or questions are accepted. Even any concerns regarding the bot.'''
-        if type(self.feedback_webhook)==int:
-            self.feedback_webhook=self.bot.get_channel(self.feedback_webhook)
-            self.feedback_webhook:discord.TextChannel=self.feedback_webhook
-            self.feedback_webhook=(await self.feedback_webhook.webhooks())[0]
         if len(feedback)>1024:
             return await ctx.send("Please limit your feedback to 1024 characters or less")
         embed=discord.Embed(title=f'Feedback from user {ctx.author.name}#{ctx.author.discriminator}')
         embed.add_field(name='User ID',value=ctx.author.id,inline=False)
         embed.add_field(name='Feedback',value=feedback,inline=False)
-        await self.feedback_webhook.send(embed=embed)
+        await self.bot.feedback_webhook.send(embed=embed)
         if isinstance(ctx.interaction,discord.Interaction):
             await ctx.send("Feedback sent!",ephemeral=private)
         else:

@@ -1,3 +1,4 @@
+from sqlite3 import IntegrityError
 import discord
 from discord.ext import commands
 import dotenv
@@ -11,10 +12,10 @@ from ..db import db
 # Loading the environment variables
 dotenv.load_dotenv()
 token = os.getenv("BOT_TOKEN")
-error_guild_id = os.getenv("GUILD_ID")
-error_channel_id = os.getenv("CHANNEL_ID")
-feedback_channel_id=os.getenv("FEEDBACK_ID")
-guild_logs_id=os.getenv('GUILD_LOG_ID')
+error_webhook = os.getenv("ERROR_WEBHOOK")
+feedback_webhook=os.getenv("FEEDBACK_WEBHOOK")
+guild_webhook=os.getenv('GUILD_WEBHOOK')
+command_webhook=os.getenv('COMMAND_WEBHOOK')
 
 intents = discord.Intents.none()
 intents.messages=True
@@ -24,10 +25,8 @@ intents.message_content=True
 # Allowing mentions in messages of the bot
 mentions = discord.AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
 
-# Cogs
-COGS = [path.split("\\")[-1][:-3] for path in glob("./lib/cogs/*.py")]
 # Owner IDS
-OWNER_ID = 650664682046226432
+OWNER_ID = os.getenv("OWNER_ID")
 
 #Logging
 discord.utils.setup_logging(level=logging.INFO)
@@ -48,7 +47,7 @@ async def get_prefix(user,message):
         prefix=prefix.split(",")
     else:
         prefix=['dexy']
-    if len(prefix_cache)>150:
+    if len(prefix_cache)>200:
         prefix_cache.pop(tuple(prefix_cache.keys())[0])
     prefix_cache[message.guild.id]=prefix
     return commands.when_mentioned_or(*prefix_cache[message.guild.id])(user, message)
@@ -58,7 +57,7 @@ async def update():
     for guild in bot.guilds:
         try:
             db.execute("INSERT INTO guilds (GuildID) VALUES (?)", guild.id)
-        except:
+        except IntegrityError:
             pass
 
 class Bot(commands.AutoShardedBot):
@@ -68,14 +67,16 @@ class Bot(commands.AutoShardedBot):
         self.owner_id = OWNER_ID
         self.reconnect = True
         self.prefix_cache=prefix_cache
-        self.feedback_webhook=feedback_channel_id
         super().__init__(case_insensitive=True, allowed_mentions=mentions, intents=intents,
                          command_prefix=get_prefix,strip_after_prefix=True,
                          owner_id=OWNER_ID,max_messages=None)
 
 
     async def setup_hook(self):
-        
+        self.error_webhook=await self.fetch_webhook(error_webhook)
+        self.feedback_webhook=await self.fetch_webhook(feedback_webhook)
+        self.guild_webhook=await self.fetch_webhook(guild_webhook)
+        self.command_webhook=await self.fetch_webhook(command_webhook)
         for ext in os.listdir("./lib/cogs"):
             if ext.endswith(".py") and not ext.startswith("_"):
                 try:
@@ -109,12 +110,6 @@ class Bot(commands.AutoShardedBot):
 
     async def on_connect(self):
         await update()
-        self.error_channel:discord.TextChannel=await self.fetch_channel(error_channel_id)
-        self.error_webhook=await self.error_channel.webhooks()
-        self.error_webhook=self.error_webhook[0]
-        self.guild_log:discord.TextChannel=await self.fetch_channel(guild_logs_id)
-        self.guild_log=await self.guild_log.webhooks()
-        self.guild_log=self.guild_log[0]
 
     # async def on_command_error(self, ctx:commands.Context, err):
     #     embed=discord.Embed(title='An error occurred',colour=ctx.me.colour)

@@ -1,3 +1,4 @@
+from sqlite3 import IntegrityError
 from typing import Union
 
 import discord
@@ -9,17 +10,22 @@ from lib.db import db
 class Events(commands.Cog):
     def __init__(self,bot:Bot):
         self.bot=bot
+    async def on_command_completion(self,ctx:commands.Context):
+        embed=discord.Embed(title='Command completed',description=ctx.message.content if not ctx.interaction else ctx.interaction.data["name"]+" "+" ".join([v["name"]+" = "+v["value"] for v in ctx.interaction.data.get("options",[])]),colour=discord.Colour.blurple())
+        embed.add_field(name='Command user',value=f"{ctx.author} - {ctx.author.id}",inline=False)
+        embed.add_field(name='Guild',value=f"{ctx.guild} {ctx.guild.id if ctx.guild is not None else 'Was in DMs'}")
+        await self.bot.command_webhook.send(embed=embed)
     async def on_guild_join(self, guild:discord.Guild):
         try:
             db.execute("INSERT INTO guilds (GuildID) VALUES (?)", guild.id)
-        except:
+        except IntegrityError:
             pass
         embed=discord.Embed(title='Guild added',description=f'ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME: {await self.bot.fetch_user(guild.owner_id)}',colour=discord.Color.green())#\n OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
-        await self.guild_log.send(embed=embed)
+        await self.bot.guild_webhook.send(embed=embed)
     
     async def on_guild_remove(self, guild:discord.Guild):
         embed=discord.Embed(title='Guild left',description=f'ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME : {await self.bot.fetch_user(guild.owner_id)}',colour=discord.Color.red())# OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
-        await self.guild_log.send(embed=embed)
+        await self.bot.guild_webhook.send(embed=embed)
     @commands.Cog.listener()
     async def on_command_error(self, ctx:Union[commands.Context,discord.Interaction], err:BaseException):
         embed=discord.Embed(title='An error occurred - ',description=err,colour=ctx.me.colour if ctx.me.colour.value else discord.Colour.blurple())
