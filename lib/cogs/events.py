@@ -1,8 +1,9 @@
+import datetime
 from sqlite3 import IntegrityError
 from typing import Union
 
 import discord
-from discord.ext import commands
+from discord.ext import commands,tasks
 from lib.bot import Bot
 from lib.db import db
 
@@ -10,6 +11,15 @@ from lib.db import db
 class Events(commands.Cog):
     def __init__(self,bot:Bot):
         self.bot=bot
+        self.guild_log={'Added':0,'Left':0}
+    async def cog_load(self) -> None:
+        self.post_guild_eod.start()
+        return await super().cog_load()
+    
+    async def cog_unload(self) -> None:
+        self.post_guild_eod.cancel()
+        return await super().cog_unload()
+    
     @commands.Cog.listener()
     async def on_command_completion(self,ctx:commands.Context):
         embed=discord.Embed(title='Command completed',description=ctx.message.content if not ctx.interaction else ctx.interaction.data["name"]+" "+" ".join([v["name"]+" = "+v["value"] for v in ctx.interaction.data.get("options",[])]),colour=discord.Colour.blurple())
@@ -24,10 +34,12 @@ class Events(commands.Cog):
             pass
         embed=discord.Embed(title='Guild added',description=f'ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME: {await self.bot.fetch_user(guild.owner_id)}',colour=discord.Color.green())#\n OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
         await self.bot.guild_webhook.send(embed=embed)
+        self.guild_log['Added']+=1
     @commands.Cog.listener()
     async def on_guild_remove(self, guild:discord.Guild):
         embed=discord.Embed(title='Guild left',description=f'ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME : {await self.bot.fetch_user(guild.owner_id)}',colour=discord.Color.red())# OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
         await self.bot.guild_webhook.send(embed=embed)
+        self.guild_log['Left']+=1
     @commands.Cog.listener()
     async def on_command_error(self, ctx:Union[commands.Context,discord.Interaction], err:BaseException):
         embed=discord.Embed(title='An error occurred - ',description=err,colour=ctx.me.colour if ctx.me.colour.value else discord.Colour.blurple())
@@ -53,11 +65,13 @@ class Events(commands.Cog):
                 embed.add_field(name='Command user - ',value=f"{ctx.author} {ctx.author.id}",inline=False)
                 await self.bot.error_webhook.send(embed=embed)
             else:
-                embed.add_field(name='Command used -\n',value=ctx.interaction.data["name"]+" "+" ".join([v["name"]+" = "+v["value"] for v in ctx.interaction.data.get("options",[])]),inline=False)
+                embed.add_field(name='Command used -\n',value=ctx.interaction.data["name"]+" "+" ".join([v["name"]+" = "+str(v["value"]) for v in ctx.interaction.data.get("options",[])]),inline=False)
                 embed.add_field(name='Command user - ',value=f"{ctx.interaction.user} {ctx.interaction.user.id}",inline=False)
                 await self.bot.error_webhook.send(embed=embed)
         except:
             raise err
-            
+    @tasks.loop(time=datetime.time(hour=0,minute=0,second=0,tzinfo=datetime.timezone(datetime.timedelta(hours=5.5))))
+    async def post_guild_eod(self):
+        await self.bot.guild_webhook.send(f"Guilds added today: {self.guild_log['Added']}\nGuilds removed today: {self.guild_log['Removed']}")
 async def setup(bot:Bot):
     await bot.add_cog(Events(bot))
