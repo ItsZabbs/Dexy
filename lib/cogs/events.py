@@ -22,7 +22,7 @@ class Events(commands.Cog):
     
     @commands.Cog.listener()
     async def on_command_completion(self,ctx:commands.Context):
-        embed=discord.Embed(title='Command completed',description=ctx.message.content if not ctx.interaction else ctx.interaction.data["name"]+" "+" ".join([v["name"]+" = "+v["value"] for v in ctx.interaction.data.get("options",[])]),colour=discord.Colour.blurple())
+        embed=discord.Embed(title='Command completed',description=ctx.message.content if not ctx.interaction else ctx.interaction.data["name"]+" "+" ".join([v["name"]+" = "+str(v["value"]) for v in ctx.interaction.data.get("options",[])]),colour=discord.Colour.blurple())
         embed.add_field(name='Command user',value=f"{ctx.author} - {ctx.author.id}",inline=False)
         embed.add_field(name='Guild',value=f"{ctx.guild} {ctx.guild.id if ctx.guild is not None else 'Was in DMs'}")
         await self.bot.command_webhook.send(embed=embed)
@@ -72,6 +72,6 @@ class Events(commands.Cog):
             raise err
     @tasks.loop(time=datetime.time(hour=0,minute=0,second=0,tzinfo=datetime.timezone(datetime.timedelta(hours=5.5))))
     async def post_guild_eod(self):
-        await self.bot.guild_webhook.send(f"Guilds added today: {self.guild_log['Added']}\nGuilds removed today: {self.guild_log['Removed']}")
+        await self.bot.guild_webhook.send(f"Guilds added today: {self.guild_log['Added']}\nGuilds removed today: {self.guild_log['Left']}")
 async def setup(bot:Bot):
     await bot.add_cog(Events(bot))
