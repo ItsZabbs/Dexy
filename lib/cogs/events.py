@@ -18,6 +18,7 @@ class Events(commands.Cog):
     
     async def cog_unload(self) -> None:
         self.post_guild_eod.cancel()
+        await self.post_guild_eod()
         return await super().cog_unload()
     
     @commands.Cog.listener()
