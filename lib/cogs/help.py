@@ -176,7 +176,7 @@ category\n Or use {self.clean_prefix(ctx)} help <command> for more info on a com
     async def send_command_help(self, command:commands.Command):
         ctx=self.get_destination()
         names=command.clean_params.values()
-        signature=self.get_command_signature(command)
+        signature=self.get_command_signature(command).replace(" [private=False]","")
         arg_desc=""
         for name,argument in command.clean_params.items():
             if name=='private':
