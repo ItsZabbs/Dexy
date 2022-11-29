@@ -73,5 +73,6 @@ class Events(commands.Cog):
     @tasks.loop(time=datetime.time(hour=0,minute=0,second=0,tzinfo=datetime.timezone(datetime.timedelta(hours=5.5))))
     async def post_guild_eod(self):
         await self.bot.guild_webhook.send(f"Guilds added today: {self.guild_log['Added']}\nGuilds removed today: {self.guild_log['Left']}")
+        self.guild_log.update({'Added':0,'Left':0})
 async def setup(bot:Bot):
     await bot.add_cog(Events(bot))

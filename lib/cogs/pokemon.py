@@ -93,9 +93,11 @@ with open("lib/cogs/pokedexdata/movesets.json",encoding='utf-8') as move:
     movesets=json.load(move)
 
 messages=['Help in keeping the bot up! [Donate](https://buymeacoffee.com/Zabbs "buy me a coffee!!")','Donate for the server costs! [Donate](https://buymeacoffee.com/Zabbs "buy me a coffee!!")','Show your appreciation for the bot! [Donate here!](https://buymeacoffee.com/Zabbs "buy me a coffee!!")']
-async def embed_this_please(embed:discord.Embed):
+async def embed_this_please(ctx:commands.Context,embed:discord.Embed):
     if random.randint(1,30)==1:
         embed.add_field(name="It also seems that you're enjoying the bot...",value=f'Care to write a review on [top.gg](https://top.gg/bot/853556227610116116)?\n {random.choice(messages)}')
+    if ctx.interaction is None and ctx.guild is None:
+        embed.set_footer(f'Did you know that you can also use the slash command and set private = True so nobody else can see it?')
     return embed
 async def get_pokedex_stuff(pokemon_dict, lite=False):
     stats = []
@@ -570,7 +572,7 @@ class Pokemon(commands.Cog):
                         value=f"{abil_rating_dict[int(abil_dict['rating'])]} ({abil_dict['rating']})", inline=True)
         embed.add_field(name='External Resources',
                         value=f'{" • ".join(urldict)}', inline=False)
-        embed=await embed_this_please(embed)
+        embed=await embed_this_please(ctx,embed)
         await ctx.send(embed=embed,ephemeral=private)
 
     @ability.autocomplete('ability')
@@ -748,7 +750,7 @@ class Pokemon(commands.Cog):
             if effectiveTo:embed.add_field(name='*Deals normal damage to:* ',value=", ".join(dict.fromkeys(effectiveTo)) if effectiveTo else "None",inline=False)
             if resistantTo:embed.add_field(name='*Resisted by:*',value=", ".join(dict.fromkeys(resistantTo)) if resistantTo else "None",inline=False)
             if immuneTo:embed.add_field(name='*Does not affect:*',value=", ".join(dict.fromkeys(immuneTo)) if immuneTo else "None",inline=False)
-        embed=await embed_this_please(embed)
+        embed=await embed_this_please(ctx,embed)
         if image_link:
             embed.set_thumbnail(url=image_link)
         embed.set_footer(text='Bolded underline indicates double weakness/resistance')
@@ -789,7 +791,7 @@ class Pokemon(commands.Cog):
 
         embed.add_field(name='External Resources',
                         value=f"{' • '.join(urllist)}", inline=False)
-        embed=await embed_this_please(embed)
+        embed=await embed_this_please(ctx,embed)
         await ctx.send(embed=embed,ephemeral=private)
 
     @iteminfo.autocomplete('itemname')
@@ -814,9 +816,9 @@ class Pokemon(commands.Cog):
                 url='https://cdn.discordapp.com/attachments/777782956357320714/868583991031234590/kadabra.png')
             return await ctx.send(embed=embed)
         try:
-            if pokemon=="prandom" and sprite_type=="none":
+            if pokemon=="random" and sprite_type=="none" or pokemon=="prandom":
                 pokemon=random.choice(pokemon_names_ani)
-            if pokemon == "prandom":
+            if pokemon == "random" or pokemon=="prandom":
                 pokemon = random.choice(pokemon_names)
             elif "-" not in pokemon:
                 if pokemon not in pokemon_names:
@@ -862,7 +864,7 @@ class Pokemon(commands.Cog):
         
         embed = discord.Embed()
         embed.set_image(url=BaseURL+url)
-        #embed=await embed_this_please(embed)
+        #embed=await embed_this_please(ctx,embed)
         return await ctx.send(embed=embed)
     
     # @app_commands.command(name='sprite',description='Sends the ingame sprite of the requested Pokemon',extras={"url":"sprites"})
@@ -900,7 +902,7 @@ class Pokemon(commands.Cog):
             except:
                 return await ctx.send("You've sent an incorrect spelling or a wrong pokemon name")
         embed = await get_pokedex_stuff(pokemon_dict,lite)
-        embed=await embed_this_please(embed)
+        embed=await embed_this_please(ctx,embed)
         await ctx.send(embed=embed,ephemeral=private)
 
     @pokedex.autocomplete("pokemon")
@@ -943,7 +945,7 @@ class Pokemon(commands.Cog):
             except:
                 return await ctx.send("You've sent an incorrect spelling or a wrong pokemon name")
         embed = await get_pokedex_stuff(pokemon_dict, True)
-        embed=await embed_this_please(embed)
+        embed=await embed_this_please(ctx,embed)
         await ctx.send(embed=embed,ephemeral=private)
 
     @lite_dex.autocomplete("pokemon")
@@ -978,7 +980,7 @@ class Pokemon(commands.Cog):
         embed=discord.Embed()
         embed.set_image(url=serebii+url+".png")
         #embed.set_footer(text="Please report any wrong artworks using the `feedback` command!")
-        embed=await embed_this_please(embed)
+        embed=await embed_this_please(ctx,embed)
         await ctx.send(embed=embed,ephemeral=private)
 
     @artwork.autocomplete("pokemon")
@@ -1036,7 +1038,7 @@ class Pokemon(commands.Cog):
         embed = await convert_move_to_embed(name, move_dict, flavourmmm)
         embed.add_field(name='External Resources',
                         value=" • ".join(urllist), inline=False)
-        embed=await embed_this_please(embed)
+        embed=await embed_this_please(ctx,embed)
         await ctx.send(embed=embed,ephemeral=private)
     
     @moveinfo.autocomplete("move")
@@ -1100,7 +1102,7 @@ class Pokemon(commands.Cog):
                 n.append(" ".join([e.capitalize() for e in moveid_dict[i['move_id']].split("-")]))
                 name=f"Level {k}" if k!=0 else "Level not applicable"
             embed.add_field(name=name,value=", ".join(n),inline=False)
-        embed=await embed_this_please(embed)
+        embed=await embed_this_please(ctx,embed)
         return await ctx.send(embed=embed,ephemeral=private)
     
     @moveset.autocomplete("pokemon")
@@ -1243,7 +1245,7 @@ class Pokemon(commands.Cog):
             if upside_down:
                 l.append("You need to flip the console upside-down")
             embed.add_field(name=f"{evolves_from} ➔ {evolves_to}",value="\n".join(l))
-        embed=await embed_this_please(embed)
+        embed=await embed_this_please(ctx,embed)
         return await ctx.send(embed=embed,ephemeral=private)
     
     @evolution.autocomplete("pokemon")
@@ -1297,7 +1299,7 @@ class Pokemon(commands.Cog):
             else:
                 embed.add_field(name='Could not find a close match for these Pokemon name(s) :',value=', '.join(not_found))
             
-        embed=await embed_this_please(embed)
+        embed=await embed_this_please(ctx,embed)
         await ctx.send(embed=embed)
         
     @tasks.loop(minutes=5)
