@@ -179,6 +179,8 @@ category\n Or use {self.clean_prefix(ctx)} help <command> for more info on a com
         signature=self.get_command_signature(command)
         arg_desc=""
         for name,argument in command.clean_params.items():
+            if name=='private':
+                continue
             arg_desc=arg_desc+"\n"+"`"+name+"`: "+(argument.description or "No Help provided")
         embed=discord.Embed(title=f'Information on `{command.name}`',description=f"```\n{command.help}\n```",colour=ctx.me.colour if ctx.me.colour!=discord.Color.default() else discord.Colour.blurple())
         embed.set_author(name=f'{ctx.me.name} Help Dialogue!')
