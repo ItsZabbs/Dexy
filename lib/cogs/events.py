@@ -15,10 +15,10 @@ class Events(commands.Cog):
     async def cog_load(self) -> None:
         self.post_guild_eod.start()
         return await super().cog_load()
-    
+
     async def cog_unload(self) -> None:
         self.post_guild_eod.cancel()
-        await self.post_guild_eod()
+        await self.bot.guild_webhook.send(f"Guilds added today: {self.guild_log['Added']}\nGuilds removed today: {self.guild_log['Left']}")
         return await super().cog_unload()
     
     @commands.Cog.listener()
