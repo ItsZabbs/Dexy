@@ -816,7 +816,7 @@ class Pokemon(commands.Cog):
                 url='https://cdn.discordapp.com/attachments/777782956357320714/868583991031234590/kadabra.png')
             return await ctx.send(embed=embed)
         try:
-            if pokemon=="random" and sprite_type=="none" or pokemon=="prandom":
+            if (pokemon=="random" or pokemon=="prandom") and sprite_type=="none":
                 pokemon=random.choice(pokemon_names_ani)
             if pokemon == "random" or pokemon=="prandom":
                 pokemon = random.choice(pokemon_names)
