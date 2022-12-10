@@ -38,10 +38,8 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx:Union[commands.Context,discord.Interaction], err:BaseException):
         embed=discord.Embed(title='An error occurred - ',description=err,colour=ctx.me.colour if ctx.me.colour.value else discord.Colour.blurple())
-        value=''
-        value+=f'You can check the [wiki](https://ItsZabbs.github.io/Pokedex-Bot{"#"+x if (x:=ctx.command.extras.get("url","").lower()) else ""})'
-        if value:
-            (embed.add_field(name='Still confused?',value=value))
+        value=f'You can check the [wiki](https://ItsZabbs.github.io/Pokedex-Bot{"#"+x if (x:=ctx.command.extras.get("url","").lower()) else ""})'
+        embed.add_field(name='Still confused?',value=value)
         if ctx.guild is None:
             await ctx.send(embed=embed)
         try:
