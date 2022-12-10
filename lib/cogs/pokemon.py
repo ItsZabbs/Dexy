@@ -258,7 +258,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
         return embed
     else:
         embed = discord.Embed(
-            title=" ".join(n.capitalize() for n in pokemon_dict["name"].replace("-"," ").split()), colour=discord.Color.from_rgb(*pokemon_dict["color"]))
+            title=" ".join(n.capitalize() for n in pokemon_dict["name"].replace("-"," ").split()), colour=discord.Color.from_rgb(*pokemon_dict["color"]) if isinstance(pokemon_dict["color"],(list,tuple)) else discord.Color.blurple())
         types = ", ".join(pokemon_dict["types"])
         if len(pokemon_dict["types"]) == 1:
             multipleTypes = "Type"
