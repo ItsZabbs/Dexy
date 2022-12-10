@@ -212,15 +212,12 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             embed.add_field(name="**Evolution**",
                             value=f"{EvoString}", inline=False)
 
-        try:
-            url = pokemon_dict["url"]
-        except KeyError:
-            url = ""
+        url=pokemon_dict.get("url","")
         if len(pokemon_dict["eggGroups"]) == 1:
             Egg = "Egg Group"
         else:
             Egg = "Egg Groups"
-        if url != "":
+        if url != "" and pokemon_dict['num']<906:
             embed.set_thumbnail(url=serebii+url+".png")
             #embed.set_footer(text="Please report any wrong artwork/icons using the `feedback` command!")
         embed.insert_field_at(
@@ -264,10 +261,11 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             multipleTypes = "Type"
         else:
             multipleTypes = "Types"
-        try:
-            embed.set_thumbnail(url=serebii+pokemon_dict['url']+".png")
-        except:
-            pass
+        if not pokemon_dict['num']>=906:
+            try:
+                embed.set_thumbnail(url=serebii+pokemon_dict['url']+".png")
+            except:
+                pass
         embed.add_field(name='**Types**', value=types, inline=False)
         embed.add_field(name='**Abilities**',
                         value=abilities, inline=True)
