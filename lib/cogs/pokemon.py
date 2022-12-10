@@ -94,8 +94,8 @@ with open("lib/cogs/pokedexdata/movesets.json",encoding='utf-8') as move:
 
 messages=['Help in keeping the bot up! [Donate](https://buymeacoffee.com/Zabbs "buy me a coffee!!")','Donate for the server costs! [Donate](https://buymeacoffee.com/Zabbs "buy me a coffee!!")','Show your appreciation for the bot! [Donate here!](https://buymeacoffee.com/Zabbs "buy me a coffee!!")']
 async def embed_this_please(ctx:commands.Context,embed:discord.Embed):
-    if random.randint(1,30)==1:
-        embed.add_field(name="It also seems that you're enjoying the bot...",value=f'Care to write a review on [top.gg](https://top.gg/bot/853556227610116116)?\n {random.choice(messages)}')
+    # if random.randint(1,30)==1:
+    #     embed.add_field(name="It also seems that you're enjoying the bot...",value=f'Care to write a review on [top.gg](https://top.gg/bot/853556227610116116)?\n {random.choice(messages)}')
     if ctx.interaction is None and ctx.guild is None:
         embed.set_footer(text=f'Did you know that you can also use the slash command and set private = True so nobody else can see it?')
     return embed

@@ -115,11 +115,11 @@ class Misc(commands.Cog):
         else:
             await ctx.message.add_reaction('✅')
     
-    @commands.hybrid_command(name='vote',aliases=['support'],extras={"url":"vote"})
-    async def vote(self,ctx):
-        """Support the bot!"""
-        embed=discord.Embed(title="Support the bot and it's developer!",description='Donate [here](https://buymeacoffee.com/Zabbs)\nUpvote the bot on [top.gg](https://top.gg/bot/853556227610116116) or [botlist](https://discordbotlist.com/bots/pokedex-bot)')
-        return await ctx.send(embed=embed)
+    # @commands.hybrid_command(name='vote',aliases=['support'],extras={"url":"vote"})
+    # async def vote(self,ctx):
+    #     """Support the bot!"""
+    #     embed=discord.Embed(title="Support the bot and it's developer!",description='Donate [here](https://buymeacoffee.com/Zabbs)\nUpvote the bot on [top.gg](https://top.gg/bot/853556227610116116) or [botlist](https://discordbotlist.com/bots/pokedex-bot)')
+    #     return await ctx.send(embed=embed)
     @commands.Cog.listener()
     async def on_ready(self):
         print(f"{Misc.__qualname__} up")

@@ -11,7 +11,7 @@ USER_HELP_MENU_LIST=[
                     ]
 
 def support_field(embed:discord.Embed,name="")->discord.Embed:
-    embed.add_field(name='\u200b',value=f'Ask about anything in the [support server](https://discord.gg/FBFTYp7nnq)\n or check the [wiki](https://itszabbs.github.io/Pokedex-Bot#{name}) for detailed documentation')
+    embed.add_field(name='\u200b',value=f'Check the [wiki](https://itszabbs.github.io/Pokedex-Bot#{name}) for detailed documentation')
     return embed
 class HelpPageSource(menus.ListPageSource):
     def __init__(self, data, helpcommand):
