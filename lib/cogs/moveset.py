@@ -7,12 +7,23 @@ import difflib
 import json
 from copy import deepcopy
 
-from lib.cogs.pokemon import Pokemon,pokedex_dict,initial_dict,version_dict,learn_list,moveid_dict,embed_this_please,version_names,pokemon_names_disp
+from lib.cogs.pokemon import (
+    Pokemon,
+    pokedex_dict,
+    initial_dict,
+    version_dict,
+    learn_list,
+    moveid_dict,
+    embed_this_please,
+    version_names,
+    pokemon_names_disp,
+)
 from lib.bot import Bot
 
 
 with open("lib/cogs/pokedexdata/movesets.json", encoding="utf-8") as move:
     movesets = json.load(move)
+
 
 @commands.hybrid_command(name="moveset", extras={"url": "movesets"})
 @app_commands.describe(
@@ -22,11 +33,8 @@ with open("lib/cogs/pokedexdata/movesets.json", encoding="utf-8") as move:
     private="If only you want to see the moveset",
 )
 async def moveset(
-    self,
     ctx,
-    pokemon: str = parameter(
-        description="The Pokemon you want to see the moveset of."
-    ),
+    pokemon: str = parameter(description="The Pokemon you want to see the moveset of."),
     game_name: str = parameter(
         description="The name of the game. Eg. Omega Ruby or use initials like ORAS"
     ),
@@ -77,9 +85,7 @@ async def moveset(
         learn_type, learn_list.keys(), n=1, cutoff=0.1
     )
     if not len(learn_type_redefined):
-        raise KeyError(
-            "I couldn't find the move learning method you're looking for..."
-        )
+        raise KeyError("I couldn't find the move learning method you're looking for...")
     movemethod = learn_type_redefined[0]
     learn_type_redefined = str(learn_list[learn_type_redefined[0]]["id"])
     try:
@@ -110,41 +116,45 @@ async def moveset(
         n = []
         for i in v:
             n.append(
-                " ".join(
-                    [e.capitalize() for e in moveid_dict[i["move_id"]].split("-")]
-                )
+                " ".join([e.capitalize() for e in moveid_dict[i["move_id"]].split("-")])
             )
             name = f"Level {k}" if k != 0 else "Level not applicable"
         embed.add_field(name=name, value=", ".join(n), inline=False)
     embed = await embed_this_please(ctx, embed)
     return await ctx.send(embed=embed, ephemeral=private)
 
+
 @moveset.autocomplete("pokemon")
-async def moveset_pokemon_auto(self, interaction, current):
+async def moveset_pokemon_auto(interaction, current):
     return [
         app_commands.Choice(name=pokemon, value=pokemon)
         for pokemon in pokemon_names_disp
         if current.lower() in pokemon.lower()
     ][:25]
 
+
 @moveset.autocomplete("game_name")
-async def moveset_gamename_auto(self, interaction, current):
+async def moveset_gamename_auto(interaction, current):
     return [
         app_commands.Choice(name=e, value=e)
         for e in version_names
         if current.lower() in e.lower()
     ][:25]
 
+
 @moveset.autocomplete("learn_type")
-async def moveset_learntype_auto(self, interaction, current):
+async def moveset_learntype_auto(interaction, current):
     return [
         app_commands.Choice(name=e.capitalize().replace("-", " "), value=e)
         for e in learn_list.keys()
         if current.lower() in e.lower()
     ][:25]
-async def setup(bot:Bot):
-    moveset.cog=Pokemon
+
+
+async def setup(bot: Bot):
+    moveset.cog = Pokemon
     await bot.add_command(moveset)
 
-async def teardown(bot:Bot):
-    await bot.remove_command('moveset')
+
+async def teardown(bot: Bot):
+    await bot.remove_command("moveset")
