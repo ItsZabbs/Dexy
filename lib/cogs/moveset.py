@@ -153,8 +153,8 @@ async def moveset_learntype_auto(interaction, current):
 
 async def setup(bot: Bot):
     moveset.cog = Pokemon
-    await bot.add_command(moveset)
+    bot.add_command(moveset)
 
 
 async def teardown(bot: Bot):
-    await bot.remove_command("moveset")
+    bot.remove_command("moveset")
