@@ -713,7 +713,6 @@ class Pokemon(commands.Cog):
         self.bot = bot
         self.bot.alias_cache = alias_cache
         self.cleanup_gc.start()
-        self.sprite_command=bot.get_command('sprite')
 
     def cog_unload(self):
         self.cleanup_gc.stop()
@@ -2026,6 +2025,8 @@ class Pokemon(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         # if message.content.split()[2].lower()=="sprite":return
+        if getattr(self,'sprite_command',True):
+            self.sprite_command=self.bot.get_command('sprite')
         if message.author.bot:
             return
         if message.guild is None:
