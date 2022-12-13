@@ -1893,6 +1893,7 @@ class Pokemon(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        # if message.content.split()[2].lower()=="sprite":return
         if getattr(self,'sprite_command',True):
             self.sprite_command=self.bot.get_command('sprite')
         if message.author.bot:
@@ -1900,18 +1901,16 @@ class Pokemon(commands.Cog):
         if message.guild is None:
             strings = list(set(SPRITE_REGEX.findall(message.content)))[:4]
             for content in strings:
-                ctx: commands.Context = await self.bot.get_context(message)
-                if ctx.command is not None:return
                 try:
+                    ctx: commands.Context = await self.bot.get_context(message)
                     await ctx.invoke(self.sprite_command, sprite_name=content)
                 except:
                     pass
         elif message.guild.id != 336642139381301249:
             strings = list(set(SPRITE_REGEX.findall(message.content)))[:4]
-            ctx: commands.Context = await self.bot.get_context(message)
-            if ctx.command is not None:return
             for content in strings:
                 try:
+                    ctx: commands.Context = await self.bot.get_context(message)
                     await ctx.invoke(self.sprite_command, sprite_name=content)
                 except:
                     pass
