@@ -93,9 +93,9 @@ class Misc(commands.Cog):
             end = time()
             await message.edit(content=f"Pong! DWSP latency: {self.bot.latency * 1000:,.0f} ms. Response time: {(end - start) * 1000:,.0f} ms.")
     @commands.hybrid_command(name='about',aliases=['info'],extras={"url":"about"})
-    async def about_command(self,ctx):
+    async def about_command(self,ctx:commands.Context):
         '''Sends information about the bot and its developer'''
-        embed=discord.Embed(title="About me",description=f'I was given life by <@!{self.bot.owner_id}> (Zabbs#4573)! \n See `{ctx.prefix}help Pokemon` for all my Pokemon utilities!',colour=ctx.me.colour)
+        embed=discord.Embed(title="About me",description=f'I was given life by <@!{self.bot.owner_id}> (Zabbs#6530)! \n See `{ctx.guild.me.mention}help Pokemon` for all my Pokemon utilities!',colour=ctx.me.colour)
         embed.set_author(name=ctx.me.name,icon_url=ctx.me.avatar.url)
         embed.set_footer(text='The Discord bot Beheeyem\'s design for embeds and data presentation has been used')
         await ctx.send(embed=embed)
