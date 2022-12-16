@@ -462,7 +462,9 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
         )
         height = pokemon_dict["heightm"]
         weight = pokemon_dict["weightkg"]
-        tier = pokemon_dict["Tier"]
+        tier = pokemon_dict.get("Tier",None)
+        if tier is None:
+            tier=pokedex_dict.get(pokemon_dict['baseSpecies'].lower().replace("-",""))['Tier']
         urllist = []
         try:
             name = pokemon_dict["baseSpecies"]
@@ -959,7 +961,7 @@ class Pokemon(commands.Cog):
             description="No flavour text"
             if abil_flav_dict.get(str(abil_dict["num"]), "No flavour text")
             == "No flavour text"
-            else abil_flav_dict.get(str(abil_dict["num"]))[-1],
+            else abil_flav_dict.get(str(abil_dict["num"]))[-1] if not abil_dict.get('flavourText',False) else abil_dict.get('flavourText',"No flavour text"),
             colour=discord.Color.blurple(),
         )
         embed.add_field(
