@@ -956,12 +956,14 @@ class Pokemon(commands.Cog):
         urldict.append(
             f"[Serebii](https://www.serebii.net/abilitydex/{nospacesname}.shtml)"
         )
+        flavourText=abil_dict.get('flavourText',None)
+        if flavourText is None:
+            flavourText=abil_flav_dict.get(str(abil_dict['num']),"No flavour text")
+            if isinstance(flavourText,list):
+                flavourText=flavourText[-1]
         embed = discord.Embed(
             title=abil_dict["name"],
-            description="No flavour text"
-            if abil_flav_dict.get(str(abil_dict["num"]), "No flavour text")
-            == "No flavour text"
-            else abil_flav_dict.get(str(abil_dict["num"]))[-1] if not abil_dict.get('flavourText',False) else abil_dict.get('flavourText',"No flavour text"),
+            description=flavourText,
             colour=discord.Color.blurple(),
         )
         embed.add_field(
