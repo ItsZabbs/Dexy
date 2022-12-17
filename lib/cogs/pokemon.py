@@ -454,9 +454,8 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             Egg = "Egg Group"
         else:
             Egg = "Egg Groups"
-        if url != "" and pokemon_dict["num"] < 906:
-            embed.set_thumbnail(url=serebii + url + ".png")
-            # embed.set_footer(text="Please report any wrong artwork/icons using the `feedback` command!")
+    
+        embed.set_thumbnail(url=serebii + url + ".png")
         embed.insert_field_at(
             2, name=f"**{Abilities}**", value=f"{abilities}", inline=True
         )
