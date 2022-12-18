@@ -507,11 +507,10 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             multipleTypes = "Type"
         else:
             multipleTypes = "Types"
-        if not pokemon_dict["num"] >= 906:
-            try:
-                embed.set_thumbnail(url=serebii + pokemon_dict["url"] + ".png")
-            except:
-                pass
+        try:
+            embed.set_thumbnail(url=serebii + pokemon_dict["url"] + ".png")
+        except:
+            pass
         embed.add_field(name="**Types**", value=types, inline=False)
         embed.add_field(name="**Abilities**", value=abilities, inline=True)
         embed.add_field(name="**Stats**", value=stats, inline=False)
