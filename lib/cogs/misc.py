@@ -95,7 +95,7 @@ class Misc(commands.Cog):
     @commands.hybrid_command(name='about',aliases=['info'],extras={"url":"about"})
     async def about_command(self,ctx:commands.Context):
         '''Sends information about the bot and its developer'''
-        embed=discord.Embed(title="About me",description=f'I was given life by <@!{self.bot.owner_id}> (Zabbs#6530)! \n See `{ctx.guild.me.mention}help Pokemon` for all my Pokemon utilities!',colour=ctx.me.colour)
+        embed=discord.Embed(title="About me",description=f'I was given life by <@!{self.bot.owner_id}> (Zabbs#6530)! \n See `{("@"+ctx.me.name) if ctx.prefix=="/" else "dexy"}help Pokemon` for all my Pokemon utilities!',colour=ctx.me.colour)
         embed.set_author(name=ctx.me.name,icon_url=ctx.me.avatar.url)
         embed.set_footer(text='The Discord bot Beheeyem\'s design for embeds and data presentation has been used')
         await ctx.send(embed=embed)
@@ -127,9 +127,9 @@ class Misc(commands.Cog):
     @tasks.loop(minutes=5.0)
     async def presence_update(self):
         if self.presence_update.current_loop%2:
-            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for @Pokedex Bot invite !"))
+            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for @Pokedex Bot invite!"))
         else:
-            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for @Pokedex Bot help !"))
+            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for @Pokedex Bot help!"))
     @presence_update.before_loop
     async def before_presence(self):
         print('waiting...')
