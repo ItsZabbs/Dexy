@@ -285,7 +285,7 @@ with open("lib/cogs/pokedexdata/movesets.json", encoding="utf-8") as move:
     movesets = json.load(move)
 
 SPRITE_REGEX=re.compile(
-    r"[\*_]\b(?P<name>[a-zA-Z0-9 -]+)\b[\*_]?",
+    r"[\*_](?P<name>[a-zA-Z0-9-][a-zA-Z0-9 -]+)\b[\*_]?",
     flags=re.IGNORECASE,
 )
 messages = [
