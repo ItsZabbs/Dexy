@@ -285,7 +285,7 @@ with open("lib/cogs/pokedexdata/movesets.json", encoding="utf-8") as move:
     movesets = json.load(move)
 
 SPRITE_REGEX=re.compile(
-    r"[\*_](?P<name>[a-zA-Z0-9-][a-zA-Z0-9 -]+)\b[\*_]?",
+    r"(\*|_)(?P<name>[a-zA-Z0-9-][a-zA-Z0-9 -]+)(\1| |\Z)",
     flags=re.IGNORECASE,
 )
 messages = [
@@ -2031,8 +2031,9 @@ class Pokemon(commands.Cog):
             self.sprite_command=self.bot.get_command('sprite')
         if message.author.bot:
             return
+        SPRITE_REGEX.finditer(message.content).groupdict()
         if message.guild is None:
-            strings = list(set(SPRITE_REGEX.findall(message.content)))[:4]
+            strings = list(set([i.groupdict()['name'] for i in SPRITE_REGEX.finditer(message.content)]))[:4]
             if not strings:
                 return
             else:
@@ -2045,7 +2046,7 @@ class Pokemon(commands.Cog):
                 except:
                     pass
         elif message.guild.id != 336642139381301249:
-            strings = list(set(SPRITE_REGEX.findall(message.content)))[:4]
+            strings = list(set([i.groupdict()['name'] for i in SPRITE_REGEX.finditer(message.content)]))[:4]
             if not strings:
                 return
             else:
