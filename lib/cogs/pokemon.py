@@ -2031,7 +2031,6 @@ class Pokemon(commands.Cog):
             self.sprite_command=self.bot.get_command('sprite')
         if message.author.bot:
             return
-        SPRITE_REGEX.finditer(message.content).groupdict()
         if message.guild is None:
             strings = list(set([i.groupdict()['name'] for i in SPRITE_REGEX.finditer(message.content)]))[:4]
             if not strings:
