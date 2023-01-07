@@ -296,8 +296,8 @@ messages = [
 
 
 async def embed_this_please(ctx: commands.Context, embed: discord.Embed):
-    # if random.randint(1,30)==1:
-    #     embed.add_field(name="It also seems that you're enjoying the bot...",value=f'Care to write a review on [top.gg](https://top.gg/bot/853556227610116116)?\n {random.choice(messages)}')
+    if random.randint(1,30)==1:
+        embed.add_field(name="It also seems that you're enjoying the bot...",value=f'Care to write a review on [top.gg](https://top.gg/bot/853556227610116116)?')
     if ctx.interaction is None and ctx.guild is None:
         embed.set_footer(
             text=f"Did you know that you can also use the slash command and set private = True so nobody else can see it?"
@@ -1101,13 +1101,13 @@ class Pokemon(commands.Cog):
                 for e in set(repeatedTypes):
                     supereffectiveFrom.remove(e)
                     ind = supereffectiveFrom.index(e)
-                    supereffectiveFrom[ind] = f"**{supereffectiveFrom[ind]}**"
+                    supereffectiveFrom[ind] = f"**__{supereffectiveFrom[ind]}__**"
             if len(set(resistantTo)) != len(resistantTo):
                 repeatedTypes = [x for x in resistantTo if resistantTo.count(x) > 1]
                 for e in set(repeatedTypes):
                     resistantTo.remove(e)
                     ind = resistantTo.index(e)
-                    resistantTo[ind] = "**" + resistantTo[ind] + "**"
+                    resistantTo[ind] = "**__" + resistantTo[ind] + "__**"
             if len(set(supereffectiveTo)) != len(supereffectiveTo):
                 repeatedTypes = [
                     x for x in supereffectiveTo if supereffectiveTo.count(x) > 1
@@ -1188,7 +1188,7 @@ class Pokemon(commands.Cog):
             inline=False,
         )
         embed.add_field(
-            name="*Is Immune from:*",
+            name="*Is Immune to:*",
             value=", ".join(dict.fromkeys(immuneFrom)) if immuneFrom else "None",
             inline=False,
         )
