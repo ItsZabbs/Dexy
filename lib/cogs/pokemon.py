@@ -35,30 +35,7 @@ type_emoji_dict = {
     "steel": "<:steel:985956509156515920>",
     "water": "<:water:985956512679735328>",
 }
-version_names = [
-    "Red, Blue",
-    "Yellow",
-    "Gold, Silver",
-    "Crystal",
-    "Ruby, Sapphire",
-    "Emerald",
-    "Firered, Leafgreen",
-    "Diamond, Pearl",
-    "Platinum",
-    "Heartgold, Soulsilver",
-    "Black, White",
-    "Colosseum",
-    "Xd",
-    "Black 2, White 2",
-    "X, Y",
-    "Omega Ruby, Alpha Sapphire",
-    "Sun, Moon",
-    "Ultra Sun, Ultra Moon",
-    "Lets Go Pikachu, Lets Go Eevee",
-    "Sword, Shield",
-    "Brilliant Diamond, Shining Pearl",
-    "Legends Arceus",
-]
+
 serebii = "https://www.serebii.net/pokemon/art/"
 back_dict = {
     "afd": "afd-back",
@@ -93,69 +70,8 @@ normal_dict = {
     "gen5": "gen5",
     "gen4": "gen4",
 }
-version_dict = {
-    "red-blue": "1",
-    "yellow": "2",
-    "gold-silver": "3",
-    "crystal": "4",
-    "ruby-sapphire": "5",
-    "emerald": "6",
-    "firered-leafgreen": "7",
-    "diamond-pearl": "8",
-    "platinum": "9",
-    "heartgold-soulsilver": "10",
-    "black-white": "11",
-    "colosseum": "12",
-    "xd": "13",
-    "black 2-white 2": "14",
-    "x-y": "15",
-    "omega ruby-alpha sapphire": "16",
-    "sun-moon": "17",
-    "ultra sun-ultra moon": "18",
-    "lets go pikachu-lets go eevee": "19",
-    "sword-shield": "20",
-    "brilliant diamond-shining pearl": "21",
-    "legends arceus": "99",
-}
-initial_dict = {
-    "rb": "1",
-    "y": "2",
-    "gs": "3",
-    "c": "4",
-    "rs": "5",
-    "e": "6",
-    "frlg": "7",
-    "dp": "8",
-    "pt": "9",
-    "hgss": "10",
-    "bw": "11",
-    "co": "12",
-    "xd": "13",
-    "b2w2": "14",
-    "xy": "15",
-    "oras": "16",
-    "sm": "17",
-    "usum": "18",
-    "lgp": "19",
-    "lge": "19",
-    "swsh": "20",
-    "bdsp": "21",
-    "pla": "99",
-}
-learn_list = {
-    "level-up": {"id": 1},
-    "egg": {"id": 2},
-    "tutor": {"id": 3},
-    "tm": {"id": 4},
-    "technical machine": {"id": 4},
-    "stadium-surfing-pikachu": {"id": 5},
-    "light-ball-egg": {"id": 6},
-    "colosseum-purification": {"id": 7},
-    "xd-shadow": {"id": 8},
-    "xd-purification": {"id": 9},
-    "form-change": {"id": 10},
-    "zygarde-cube": {"id": 11},
-}
+
+
 type_dict = {
     1: ("Normal", (168, 168, 120)),
     2: ("Fighting", (192, 48, 40)),
@@ -284,7 +200,7 @@ item_names = tuple(name for name in item_id_dict.values())
 with open("lib/cogs/pokedexdata/movesets.json", encoding="utf-8") as move:
     movesets = json.load(move)
 
-SPRITE_REGEX=re.compile(
+SPRITE_REGEX = re.compile(
     r"(\*|_)(?P<name>[a-zA-Z0-9-][a-zA-Z0-9 -]+)(\1| |\Z)",
     flags=re.IGNORECASE,
 )
@@ -296,8 +212,11 @@ messages = [
 
 
 async def embed_this_please(ctx: commands.Context, embed: discord.Embed):
-    if random.randint(1,30)==1:
-        embed.add_field(name="It also seems that you're enjoying the bot...",value=f'Care to write a review on [top.gg](https://top.gg/bot/853556227610116116)?')
+    if random.randint(1, 30) == 1:
+        embed.add_field(
+            name="It also seems that you're enjoying the bot...",
+            value=f"Care to write a review on [top.gg](https://top.gg/bot/853556227610116116)?",
+        )
     if ctx.interaction is None and ctx.guild is None:
         embed.set_footer(
             text=f"Did you know that you can also use the slash command and set private = True so nobody else can see it?"
@@ -454,16 +373,18 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             Egg = "Egg Group"
         else:
             Egg = "Egg Groups"
-    
+
         embed.set_thumbnail(url=serebii + url + ".png")
         embed.insert_field_at(
             2, name=f"**{Abilities}**", value=f"{abilities}", inline=True
         )
         height = pokemon_dict["heightm"]
         weight = pokemon_dict["weightkg"]
-        tier = pokemon_dict.get("Tier",None)
+        tier = pokemon_dict.get("Tier", None)
         if tier is None:
-            tier=pokedex_dict.get(pokemon_dict['baseSpecies'].lower().replace("-",""))['Tier']
+            tier = pokedex_dict.get(
+                pokemon_dict["baseSpecies"].lower().replace("-", "")
+            )["Tier"]
         urllist = []
         try:
             name = pokemon_dict["baseSpecies"]
@@ -954,11 +875,11 @@ class Pokemon(commands.Cog):
         urldict.append(
             f"[Serebii](https://www.serebii.net/abilitydex/{nospacesname}.shtml)"
         )
-        flavourText=abil_dict.get('flavourText',None)
+        flavourText = abil_dict.get("flavourText", None)
         if flavourText is None:
-            flavourText=abil_flav_dict.get(str(abil_dict['num']),"No flavour text")
-            if isinstance(flavourText,list):
-                flavourText=flavourText[-1]
+            flavourText = abil_flav_dict.get(str(abil_dict["num"]), "No flavour text")
+            if isinstance(flavourText, list):
+                flavourText = flavourText[-1]
         embed = discord.Embed(
             title=abil_dict["name"],
             description=flavourText,
@@ -1627,7 +1548,7 @@ class Pokemon(commands.Cog):
         hyphenname = (name.replace(" ", "-")).lower()
         urllist.append(f"[PokemonDB](https://pokemondb.net/move/{hyphenname})")
         urllist.append(f"[Smogon](https://www.smogon.com/dex/ss/moves/{hyphenname}/)")
-        flavourmmm = move_dict["flavourText"][-1]
+        flavourmmm=move_dict.get("flavourText",["Could not find flavour text."])[-1]
         nospacename = (name.replace(" ", "")).lower()
         if (
             flavourmmm
@@ -1661,134 +1582,134 @@ class Pokemon(commands.Cog):
             if current.lower() in move.lower()
         ][:25]
 
-    @commands.hybrid_command(name="moveset", extras={"url": "movesets"})
-    @app_commands.describe(
-        pokemon="The Pokemon you want to get the moveset of",
-        game_name="The game you want to get the moveset of",
-        learn_type="The learning method of the moves",
-        private="If only you want to see the moveset",
-    )
-    async def moveset(
-        self,
-        ctx,
-        pokemon: str = parameter(
-            description="The Pokemon you want to see the moveset of."
-        ),
-        game_name: str = parameter(
-            description="The name of the game. Eg. Omega Ruby or use initials like ORAS"
-        ),
-        learn_type: str = parameter(
-            description="The learning method you want to see the moveset of.",
-            default="level-up",
-        ),
-        private: Optional[bool] = parameter(
-            description="If only you want to see the moveset. Slash commands only.",
-            default=False,
-        ),
-    ):
-        """Sends the pokemon's moveset in the requested game. See [prefix]help moveset for more info"""
-        pokemon = pokemon.lower()
-        pokemon = pokemon.replace(" ", "")
-        try:
-            colour = pokedex_dict[pokemon]["color"]
-            name = pokedex_dict["pokemon"]["name"]
-            number = pokedex_dict[pokemon]["num"]
-        except KeyError:
-            try:
-                name = difflib.get_close_matches(pokemon, pokedex_dict.keys(), n=1)[0]
-                if not len(name):
-                    return await ctx.send(
-                        "Looks like the pokemon you requested doesn't exist..."
-                    )
-                number = pokedex_dict[name]["num"]
-                colour = pokedex_dict[name]["color"]
-            except:
-                return await ctx.send(
-                    "You've sent an incorrect spelling or a wrong pokemon name"
-                )
-        game_name = game_name.lower()
-        version_num = initial_dict.get(game_name, None)
-        if version_num is None:
-            version_num = difflib.get_close_matches(
-                game_name, version_dict.keys(), n=1, cutoff=0.3
-            )
-            if not len(version_num):
-                raise KeyError("I couldn't find the game you're looking for...")
-            game_name = version_num[0].split("-")
-            version_num = version_dict[version_num[0]]
-        else:
-            keys = tuple(version_dict.keys())
-            values = tuple(version_dict.values()).index(version_num)
-            game_name = keys[values].split("-")
-        learn_type_redefined = difflib.get_close_matches(
-            learn_type, learn_list.keys(), n=1, cutoff=0.1
-        )
-        if not len(learn_type_redefined):
-            raise KeyError(
-                "I couldn't find the move learning method you're looking for..."
-            )
-        movemethod = learn_type_redefined[0]
-        learn_type_redefined = str(learn_list[learn_type_redefined[0]]["id"])
-        try:
-            e = deepcopy(movesets[str(number)][version_num][learn_type_redefined])
-        except:
-            return await ctx.send(
-                "The Pokemon you sent probably does not exist in that game or it does learn any moves through that method."
-            )
-        bylevel = {}
-        if e[0].get("level", "jfioewjfo") == "jfioewjfo":
-            e = deepcopy(
-                movesets[str(number)][str(int(version_num) - 1)][learn_type_redefined]
-            )
-        for d in e:
-            l = d.get("level", 1)
-            ls = bylevel.get(l, [])
-            if d.get("level", "jfioewjfo") != "jfioewjfo":
-                d.pop("level")
-            ls.append(d)
-            bylevel.update({l: ls})
-        colour = discord.Color.from_rgb(*colour)
-        embed = discord.Embed(
-            title=name.capitalize(),
-            description=f'Move method - {" ".join([e.capitalize() for e in movemethod.split("-")])} \nGame - {", ".join(e.capitalize() if len(e.split())==0 else " ".join([i.capitalize() for i in e.split(" ")]) for e in game_name)}',
-            colour=colour,
-        )
-        for k, v in bylevel.items():
-            n = []
-            for i in v:
-                n.append(
-                    " ".join(
-                        [e.capitalize() for e in moveid_dict[i["move_id"]].split("-")]
-                    )
-                )
-                name = f"Level {k}" if k != 0 else "Level not applicable"
-            embed.add_field(name=name, value=", ".join(n), inline=False)
-        embed = await embed_this_please(ctx, embed)
-        return await ctx.send(embed=embed, ephemeral=private)
+    # @commands.hybrid_command(name="moveset", extras={"url": "movesets"})
+    # @app_commands.describe(
+    #     pokemon="The Pokemon you want to get the moveset of",
+    #     game_name="The game you want to get the moveset of",
+    #     learn_type="The learning method of the moves",
+    #     private="If only you want to see the moveset",
+    # )
+    # async def moveset(
+    #     self,
+    #     ctx,
+    #     pokemon: str = parameter(
+    #         description="The Pokemon you want to see the moveset of."
+    #     ),
+    #     game_name: str = parameter(
+    #         description="The name of the game. Eg. Omega Ruby or use initials like ORAS"
+    #     ),
+    #     learn_type: str = parameter(
+    #         description="The learning method you want to see the moveset of.",
+    #         default="level-up",
+    #     ),
+    #     private: Optional[bool] = parameter(
+    #         description="If only you want to see the moveset. Slash commands only.",
+    #         default=False,
+    #     ),
+    # ):
+    #     """Sends the pokemon's moveset in the requested game. See [prefix]help moveset for more info"""
+    #     pokemon = pokemon.lower()
+    #     pokemon = pokemon.replace(" ", "")
+    #     try:
+    #         colour = pokedex_dict[pokemon]["color"]
+    #         name = pokedex_dict["pokemon"]["name"]
+    #         number = pokedex_dict[pokemon]["num"]
+    #     except KeyError:
+    #         try:
+    #             name = difflib.get_close_matches(pokemon, pokedex_dict.keys(), n=1)[0]
+    #             if not len(name):
+    #                 return await ctx.send(
+    #                     "Looks like the pokemon you requested doesn't exist..."
+    #                 )
+    #             number = pokedex_dict[name]["num"]
+    #             colour = pokedex_dict[name]["color"]
+    #         except:
+    #             return await ctx.send(
+    #                 "You've sent an incorrect spelling or a wrong pokemon name"
+    #             )
+    #     game_name = game_name.lower()
+    #     version_num = initial_dict.get(game_name, None)
+    #     if version_num is None:
+    #         version_num = difflib.get_close_matches(
+    #             game_name, version_dict.keys(), n=1, cutoff=0.3
+    #         )
+    #         if not len(version_num):
+    #             raise KeyError("I couldn't find the game you're looking for...")
+    #         game_name = version_num[0].split("-")
+    #         version_num = version_dict[version_num[0]]
+    #     else:
+    #         keys = tuple(version_dict.keys())
+    #         values = tuple(version_dict.values()).index(version_num)
+    #         game_name = keys[values].split("-")
+    #     learn_type_redefined = difflib.get_close_matches(
+    #         learn_type, learn_list.keys(), n=1, cutoff=0.1
+    #     )
+    #     if not len(learn_type_redefined):
+    #         raise KeyError(
+    #             "I couldn't find the move learning method you're looking for..."
+    #         )
+    #     movemethod = learn_type_redefined[0]
+    #     learn_type_redefined = str(learn_list[learn_type_redefined[0]]["id"])
+    #     try:
+    #         e = deepcopy(movesets[str(number)][version_num][learn_type_redefined])
+    #     except:
+    #         return await ctx.send(
+    #             "The Pokemon you sent probably does not exist in that game or it does learn any moves through that method."
+    #         )
+    #     bylevel = {}
+    #     if e[0].get("level", "jfioewjfo") == "jfioewjfo":
+    #         e = deepcopy(
+    #             movesets[str(number)][str(int(version_num) - 1)][learn_type_redefined]
+    #         )
+    #     for d in e:
+    #         l = d.get("level", 1)
+    #         ls = bylevel.get(l, [])
+    #         if d.get("level", "jfioewjfo") != "jfioewjfo":
+    #             d.pop("level")
+    #         ls.append(d)
+    #         bylevel.update({l: ls})
+    #     colour = discord.Color.from_rgb(*colour)
+    #     embed = discord.Embed(
+    #         title=name.capitalize(),
+    #         description=f'Move method - {" ".join([e.capitalize() for e in movemethod.split("-")])} \nGame - {", ".join(e.capitalize() if len(e.split())==0 else " ".join([i.capitalize() for i in e.split(" ")]) for e in game_name)}',
+    #         colour=colour,
+    #     )
+    #     for k, v in bylevel.items():
+    #         n = []
+    #         for i in v:
+    #             n.append(
+    #                 " ".join(
+    #                     [e.capitalize() for e in moveid_dict[i["move_id"]].split("-")]
+    #                 )
+    #             )
+    #             name = f"Level {k}" if k != 0 else "Level not applicable"
+    #         embed.add_field(name=name, value=", ".join(n), inline=False)
+    #     embed = await embed_this_please(ctx, embed)
+    #     return await ctx.send(embed=embed, ephemeral=private)
 
-    @moveset.autocomplete("pokemon")
-    async def moveset_pokemon_auto(self, interaction, current):
-        return [
-            app_commands.Choice(name=pokemon, value=pokemon)
-            for pokemon in pokemon_names_disp
-            if current.lower() in pokemon.lower()
-        ][:25]
+    # @moveset.autocomplete("pokemon")
+    # async def moveset_pokemon_auto(self, interaction, current):
+    #     return [
+    #         app_commands.Choice(name=pokemon, value=pokemon)
+    #         for pokemon in pokemon_names_disp
+    #         if current.lower() in pokemon.lower()
+    #     ][:25]
 
-    @moveset.autocomplete("game_name")
-    async def moveset_gamename_auto(self, interaction, current):
-        return [
-            app_commands.Choice(name=e, value=e)
-            for e in version_names
-            if current.lower() in e.lower()
-        ][:25]
+    # @moveset.autocomplete("game_name")
+    # async def moveset_gamename_auto(self, interaction, current):
+    #     return [
+    #         app_commands.Choice(name=e, value=e)
+    #         for e in version_names
+    #         if current.lower() in e.lower()
+    #     ][:25]
 
-    @moveset.autocomplete("learn_type")
-    async def moveset_learntype_auto(self, interaction, current):
-        return [
-            app_commands.Choice(name=e.capitalize().replace("-", " "), value=e)
-            for e in learn_list.keys()
-            if current.lower() in e.lower()
-        ][:25]
+    # @moveset.autocomplete("learn_type")
+    # async def moveset_learntype_auto(self, interaction, current):
+    #     return [
+    #         app_commands.Choice(name=e.capitalize().replace("-", " "), value=e)
+    #         for e in learn_list.keys()
+    #         if current.lower() in e.lower()
+    #     ][:25]
 
     @commands.hybrid_command(
         name="evo", aliases=["evolution", "evol"], extras={"url": "evolution-chains"}
@@ -2027,30 +1948,46 @@ class Pokemon(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         # if message.content.split()[2].lower()=="sprite":return
-        if getattr(self,'sprite_command',True):
-            self.sprite_command=self.bot.get_command('sprite')
+        if getattr(self, "sprite_command", True):
+            self.sprite_command = self.bot.get_command("sprite")
         if message.author.bot:
             return
         if message.guild is None:
-            strings = list(set([i.groupdict()['name'] for i in SPRITE_REGEX.finditer(message.content)]))[:4]
+            strings = list(
+                set(
+                    [
+                        i.groupdict()["name"]
+                        for i in SPRITE_REGEX.finditer(message.content)
+                    ]
+                )
+            )[:4]
             if not strings:
                 return
             else:
                 ctx: commands.Context = await self.bot.get_context(message)
-                if ctx.command is not None:return
+                if ctx.command is not None:
+                    return
             for content in strings:
                 try:
-                    
+
                     await ctx.invoke(self.sprite_command, sprite_name=content)
                 except:
                     pass
         elif message.guild.id != 336642139381301249:
-            strings = list(set([i.groupdict()['name'] for i in SPRITE_REGEX.finditer(message.content)]))[:4]
+            strings = list(
+                set(
+                    [
+                        i.groupdict()["name"]
+                        for i in SPRITE_REGEX.finditer(message.content)
+                    ]
+                )
+            )[:4]
             if not strings:
                 return
             else:
                 ctx: commands.Context = await self.bot.get_context(message)
-                if ctx.command is not None:return
+                if ctx.command is not None:
+                    return
             for content in strings:
                 try:
                     ctx: commands.Context = await self.bot.get_context(message)

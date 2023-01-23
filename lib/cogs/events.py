@@ -52,6 +52,8 @@ class Events(commands.Cog):
                 await ctx.author.send(f"Please ensure that I have the **SEND MESSAGES AND EMBED LINKS** permissions in {ctx.channel.mention}")
         except discord.HTTPException as err:
             raise err
+        except AttributeError:
+            pass
         try:
             embed=discord.Embed(title='Error',description=err,colour=discord.Color.red())
             if ctx.interaction is None:

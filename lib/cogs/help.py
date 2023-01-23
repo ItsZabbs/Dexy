@@ -1,8 +1,8 @@
-from typing import Any, Dict, Tuple
+from typing import Dict, List, Mapping, Optional
 import discord
-from itertools import starmap
 from discord.ext import menus,commands
 from discord import ui
+from discord.ext.commands import Command,Cog
 USER_HELP_MENU_LIST=[
                     discord.SelectOption(label='Pokemon',value=0,description='Pokemon information related',emoji="<:Pokeball:743294950355107861>"),
                     discord.SelectOption(label='Misc',value=1,description='Miscellaneous.',emoji="❓"),
@@ -113,14 +113,19 @@ class MyHelp(commands.MinimalHelpCommand):
         return ctx.clean_prefix if hasattr(ctx,"clean_prefix") else "dexy "
     def get_destination(self) -> commands.Context:
         return self.context
-    async def send_bot_help(self, mapping):
-        all_commands:Dict[int,Tuple[str,list]]=dict()
-        i=0
+    async def send_bot_help(self, mapping:Mapping[Optional[Cog],List[Command]]):
+        all_commands:Dict[int,Dict[str,list]]=dict()
+        for command in mapping[None]:
+            if getattr(command,"helpcog",None) is not None:
+                i=mapping.get(command.helpcog)
+                i.append(command)
+                mapping[None].remove(command)
         #sorted_mapping=dict(sorted(mapping.items(),key=lambda item:item[0].qualified_name if item[0] else "No Category"),reverse=True)
         for cog,commands in mapping.items():
+            i=None
             commandlist=dict()
-            if not cog:
-                continue
+            # if not cog:
+            #     continue
             name=cog.qualified_name if cog else "No Category"
             filtered_list=await self.filter_commands(commands,sort=True)
             for command in filtered_list:
@@ -130,6 +135,8 @@ class MyHelp(commands.MinimalHelpCommand):
                 elif name=="Misc":i=1
                 elif name=="Meta":i=2
                 elif name=="Help":i=3
+                if i is None:
+                    continue
                 all_commands[i]={name:commandlist}      
         #all_commands=dict(sorted(all_commands.items(), key=lambda item:tuple(item[1].keys())[0]))
         formatter = HelpPageSource(all_commands, self)
@@ -137,6 +144,7 @@ class MyHelp(commands.MinimalHelpCommand):
         await menu.start(self.context)
     async def send_cog_help(self, cog:commands.Cog):
         command = cog.get_commands()
+        command+=getattr(cog,'extracommands',[])
         ctx:commands.Context=self.get_destination()
         embed=discord.Embed(title=cog.qualified_name,description=cog.description,colour=ctx.me.colour if ctx.me.colour!=discord.Colour.default() else discord.Color.blurple())        
         embed.set_author(name=f'{ctx.me.name} Help Dialogue!')
