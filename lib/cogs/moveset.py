@@ -188,7 +188,7 @@ async def moveset(
         e = deepcopy(
             movesets[str(number)][str(int(version_num) - 1)][learn_type_redefined]
         )
-    for d in sorted(e,key=lambda x:x['level']):
+    for d in sorted(e,key=lambda x:x.get('level',1)):
         l = d.get("level", 1)
         ls = bylevel.get(l, [])
         if d.get("level", "jfioewjfo") != "jfioewjfo":
