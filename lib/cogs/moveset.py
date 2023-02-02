@@ -1,18 +1,19 @@
 from lib.bot import Bot
 from lib.cogs.pokemon import Pokemon
 from discord.ext import commands
-from discord import app_commands
+from discord import app_commands,Interaction
 from discord.ext.commands import parameter
 import discord
 import difflib
 from copy import deepcopy
-
-from typing import Optional
+from typing import Dict, List, Optional
 
 from .pokemon import Pokemon
 from .pokemon import moveid_dict, pokedex_dict, embed_this_please, pokemon_names_disp
 import ujson
-
+inverse_moveid_dict={}
+for k,v in moveid_dict.items():
+    inverse_moveid_dict[v]=k
 version_names = [
     "Red, Blue",
     "Yellow",
@@ -51,6 +52,7 @@ learn_list = {
     "form-change": {"id": 10},
     "zygarde-cube": {"id": 11},
 }
+learn_list_better={1: 'level-up', 2: 'egg', 3: 'tutor', 4: 'technical machine', 5: 'stadium-surfing-pikachu', 6: 'light-ball-egg', 7: 'colosseum-purification', 8: 'xd-shadow', 9: 'xd-purification', 10: 'form-change', 11: 'zygarde-cube'}
 version_dict = {
     "red-blue": "1",
     "yellow": "2",
@@ -102,7 +104,7 @@ initial_dict = {
 }
 
 with open("lib/cogs/pokedexdata/movesets.json", encoding="utf-8") as move:
-    movesets = ujson.load(move)
+    movesets:Dict[str,Dict[str,Dict[str,List[Dict[str,int]]]]] = ujson.load(move)
 
 
 def with_cog(cog: commands.Cog):
@@ -238,8 +240,75 @@ async def moveset_learntype_auto(interaction, current):
         for e in learn_list.keys()
         if current.lower() in e.lower()
     ][:25]
+@app_commands.command("can_learn")
+async def can_learn(interaction:Interaction,pokemon:str,move_name:int,game_name:int):
+    pokemon = pokemon.lower()
+    pokemon = pokemon.replace(" ", "")
+    try:
+        colour = pokedex_dict[pokemon]["color"]
+        name = pokedex_dict["pokemon"]["name"]
+        number = pokedex_dict[pokemon]["num"]
+    except KeyError:
+        try:
+            name = difflib.get_close_matches(pokemon, pokedex_dict.keys(), n=1)[0]
+            if not len(name):
+                return await interaction.response.send_message(
+                    "Looks like the pokemon you requested doesn't exist...",ephemeral=True
+                )
+            number = pokedex_dict[name]["num"]
+            colour = pokedex_dict[name]["color"]
+        except:
+            return await interaction.response.send_message(
+                "You've sent an incorrect spelling or a wrong pokemon name",ephemeral=True
+            )
+    game_name = game_name.lower()
+    version_num = initial_dict.get(game_name, None)
+    if version_num is None:
+        version_num = difflib.get_close_matches(
+            game_name, version_dict.keys(), n=1, cutoff=0.3
+        )
+        if not len(version_num):
+            raise KeyError("I couldn't find the game you're looking for...")
+        game_name = version_num[0].split("-")
+        version_num = version_dict[version_num[0]]
+    else:
+        keys = tuple(version_dict.keys())
+        values = tuple(version_dict.values()).index(version_num)
+        game_name = keys[values].split("-")
+    pokemon_moveset=movesets[str(number)].get(str(version_num),None)
+    if pokemon_moveset is None:
+        return await interaction.response.send_message(f"{pokemon.capitalize} didn't exist in {game_name}!")
+    all_learn_list=[]
+    for k,v in pokemon_moveset.items():
+        if move_name in (d:=[move['move_id'] for move in v]):
+            all_learn_list.append((learn_list_better[k],v[d.index(move)].get('level',0)))
+    if all_learn_list:
+        await interaction.response.send_message(f"{pokemon.capitalize()} learns {moveid_dict[move_name]} in these ways:{'\n'.join([i[0].replace('-',' ').capitalize()+(', Level: '+str(i[1]) if i[1] else '') for i in all_learn_list])}")
+    else:
+        await interaction.response.send_message(f"{pokemon.capitalize()} does not learn {moveid_dict[move_name]} in any way.")
+@can_learn.autocomplete("pokemon")
+async def can_learn_pokemon_auto(interaction, current):
+    return [
+        app_commands.Choice(name=pokemon, value=pokemon)
+        for pokemon in pokemon_names_disp
+        if current.lower() in pokemon.lower()
+    ][:25]
 
 
+@can_learn.autocomplete("game_name")
+async def can_learn_gamename_auto(interaction, current):
+    return [
+        app_commands.Choice(name=e, value=e)
+        for e in version_names
+        if current.lower() in e.lower()
+    ][:25]
+@can_learn.autocomplete("move_name")
+async def can_learn_move_name_auto(interaction,current):
+    return [
+        app_commands.Choice(name=k,value=v)
+        for k,v in inverse_moveid_dict.items()
+        if current.lower() in k
+    ]
 async def setup(bot: Bot):
     # moveset.callback=moveset
     bot.add_command(moveset)
