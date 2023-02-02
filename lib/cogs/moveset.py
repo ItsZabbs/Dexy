@@ -283,7 +283,10 @@ async def can_learn(interaction:Interaction,pokemon:str,move_name:int,game_name:
     all_learn_list=[]
     for k,v in pokemon_moveset.items():
         if move_name in (d:=[move['move_id'] for move in v]):
-            all_learn_list.append((learn_list_better[k],v[d.index(move_name)].get('level',0)))
+            try:
+                all_learn_list.append((learn_list_better[k],v[d.index(move_name)].get('level',0)))
+            except Exception as e:
+                print(e.with_traceback())
     if all_learn_list:
         n='\n'.join(["Method: "+i[0]+('; Level learnt at: '+str(i[1]) if i[1] else '') for i in all_learn_list])
         await interaction.response.send_message(f"{pokemon.capitalize()} learns {moveid_dict[move_name]} in these way(s):{n}",ephemeral=private)
