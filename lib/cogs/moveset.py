@@ -277,7 +277,11 @@ async def can_learn(interaction:Interaction,pokemon:str,move_name:int,game_name:
         keys = tuple(version_dict.keys())
         values = tuple(version_dict.values()).index(version_num)
         game_name = keys[values].split("-")
-    pokemon_moveset=movesets[str(number)].get(str(version_num),None)
+    pokemon_moveset=deepcopy(movesets[str(number)].get(str(version_num),None))
+    if pokemon_moveset['1'][0].get("level",None) is None:
+        e = deepcopy(
+            movesets[str(number)][str(int(version_num) - 1)]
+        )
     if pokemon_moveset is None:
         return await interaction.response.send_message(f"{pokemon.capitalize} didn't exist in {game_name}!",ephemeral=True)
     all_learn_list=[]
