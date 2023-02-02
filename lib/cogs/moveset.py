@@ -283,15 +283,15 @@ async def can_learn(interaction:Interaction,pokemon:str,move_name:int,game_name:
     all_learn_list=[]
     for k,v in pokemon_moveset.items():
         if move_name in (d:=[move['move_id'] for move in v]):
-            try:
-                all_learn_list.append((learn_list_better[k],v[d.index(move_name)].get('level',0)))
-            except Exception as e:
-                print(e.with_traceback())
+            temp=learn_list_better[int(k)]
+            anothertemp=v[d.index(move_name)].get('level',0)
+            all_learn_list.append((temp,anothertemp))
+    move_name=" ".join([e.capitalize() for e in moveid_dict[move_name].split("-")])
     if all_learn_list:
         n='\n'.join(["Method: "+i[0]+('; Level learnt at: '+str(i[1]) if i[1] else '') for i in all_learn_list])
-        await interaction.response.send_message(f"{pokemon.capitalize()} learns {moveid_dict[move_name]} in these way(s):{n}",ephemeral=private)
+        await interaction.response.send_message(f"{pokemon.capitalize()} learns {move_name} in these way(s):\n{n}",ephemeral=private)
     else:
-        await interaction.response.send_message(f"{pokemon.capitalize()} does not learn {moveid_dict[move_name]} in any way.",ephemeral=private)
+        await interaction.response.send_message(f"{pokemon.capitalize()} does not learn {move_name} in any way.",ephemeral=private)
 @can_learn.autocomplete("pokemon")
 async def can_learn_pokemon_auto(interaction, current):
     return [
@@ -313,7 +313,7 @@ async def can_learn_move_name_auto(interaction,current):
     return [
         app_commands.Choice(name=" ".join([e.capitalize() for e in k.split("-")]),value=v)
         for k,v in inverse_moveid_dict.items()
-        if current.lower() in k
+        if current.lower().replace(" ","-") in k
     ][:25]
 async def setup(bot: Bot):
     # moveset.callback=moveset
