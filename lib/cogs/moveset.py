@@ -52,7 +52,8 @@ learn_list = {
     "form-change": {"id": 10},
     "zygarde-cube": {"id": 11},
 }
-learn_list_better={1: 'level-up', 2: 'egg', 3: 'tutor', 4: 'technical machine', 5: 'stadium-surfing-pikachu', 6: 'light-ball-egg', 7: 'colosseum-purification', 8: 'xd-shadow', 9: 'xd-purification', 10: 'form-change', 11: 'zygarde-cube'}
+learn_list_better = {1: 'Level Up', 2: 'Egg', 3: 'Tutor', 4: 'Technical Machine', 5: 'Stadium Surfing Pikachu',
+                     6: 'Light Ball Egg', 7: 'Colosseum Purification', 8: 'Xd Shadow', 9: 'Xd Purification', 10: 'Form Change', 11: 'Zygarde Cube'}
 version_dict = {
     "red-blue": "1",
     "yellow": "2",
@@ -283,7 +284,8 @@ async def can_learn(interaction:Interaction,pokemon:str,move_name:int,game_name:
         if move_name in (d:=[move['move_id'] for move in v]):
             all_learn_list.append((learn_list_better[k],v[d.index(move)].get('level',0)))
     if all_learn_list:
-        await interaction.response.send_message(f"{pokemon.capitalize()} learns {moveid_dict[move_name]} in these ways:{'\n'.join([i[0].replace('-',' ').capitalize()+(', Level: '+str(i[1]) if i[1] else '') for i in all_learn_list])}")
+        n='\n'.join([i[0]+(', Level learnt at: '+str(i[1]) if i[1] else '') for i in all_learn_list])
+        await interaction.response.send_message(f"{pokemon.capitalize()} learns {moveid_dict[move_name]} in these way(s):{n}")
     else:
         await interaction.response.send_message(f"{pokemon.capitalize()} does not learn {moveid_dict[move_name]} in any way.")
 @can_learn.autocomplete("pokemon")
