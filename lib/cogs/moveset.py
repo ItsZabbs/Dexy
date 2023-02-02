@@ -311,7 +311,7 @@ async def can_learn_move_name_auto(interaction,current):
         app_commands.Choice(name=k,value=v)
         for k,v in inverse_moveid_dict.items()
         if current.lower() in k
-    ]
+    ][:25]
 async def setup(bot: Bot):
     # moveset.callback=moveset
     bot.add_command(moveset)
