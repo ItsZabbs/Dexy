@@ -241,8 +241,9 @@ async def moveset_learntype_auto(interaction, current):
         for e in learn_list.keys()
         if current.lower() in e.lower()
     ][:25]
-@app_commands.command("can_learn")
-async def can_learn(interaction:Interaction,pokemon:str,move_name:int,game_name:int):
+@app_commands.describe(pokemon="The pokemon whose learnset you want to check",move_name="The move you want to check for",game_name="The game whose moveset should be selected",private="If you want to invoke this command privately")
+@app_commands.command(name="can_learn",description="Check if a pokemon learns a move")
+async def can_learn(interaction:Interaction,pokemon:str,move_name:int,game_name:int,private:Optional[bool]=False):
     pokemon = pokemon.lower()
     pokemon = pokemon.replace(" ", "")
     try:
@@ -278,16 +279,16 @@ async def can_learn(interaction:Interaction,pokemon:str,move_name:int,game_name:
         game_name = keys[values].split("-")
     pokemon_moveset=movesets[str(number)].get(str(version_num),None)
     if pokemon_moveset is None:
-        return await interaction.response.send_message(f"{pokemon.capitalize} didn't exist in {game_name}!")
+        return await interaction.response.send_message(f"{pokemon.capitalize} didn't exist in {game_name}!",ephemeral=True)
     all_learn_list=[]
     for k,v in pokemon_moveset.items():
         if move_name in (d:=[move['move_id'] for move in v]):
             all_learn_list.append((learn_list_better[k],v[d.index(move)].get('level',0)))
     if all_learn_list:
         n='\n'.join([i[0]+(', Level learnt at: '+str(i[1]) if i[1] else '') for i in all_learn_list])
-        await interaction.response.send_message(f"{pokemon.capitalize()} learns {moveid_dict[move_name]} in these way(s):{n}")
+        await interaction.response.send_message(f"{pokemon.capitalize()} learns {moveid_dict[move_name]} in these way(s):{n}",ephemeral=private)
     else:
-        await interaction.response.send_message(f"{pokemon.capitalize()} does not learn {moveid_dict[move_name]} in any way.")
+        await interaction.response.send_message(f"{pokemon.capitalize()} does not learn {moveid_dict[move_name]} in any way.",ephemeral=private)
 @can_learn.autocomplete("pokemon")
 async def can_learn_pokemon_auto(interaction, current):
     return [
