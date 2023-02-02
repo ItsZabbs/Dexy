@@ -11,7 +11,7 @@ from typing import Dict, List, Optional
 from .pokemon import Pokemon
 from .pokemon import moveid_dict, pokedex_dict, embed_this_please, pokemon_names_disp
 import ujson
-inverse_moveid_dict={}
+inverse_moveid_dict:Dict[str,int]={}
 for k,v in moveid_dict.items():
     inverse_moveid_dict[v]=k
 version_names = [
@@ -243,7 +243,7 @@ async def moveset_learntype_auto(interaction, current):
     ][:25]
 @app_commands.describe(pokemon="The pokemon whose learnset you want to check",move_name="The move you want to check for",game_name="The game whose moveset should be selected",private="If you want to invoke this command privately")
 @app_commands.command(name="can_learn",description="Check if a pokemon learns a move")
-async def can_learn(interaction:Interaction,pokemon:str,move_name:int,game_name:int,private:Optional[bool]=False):
+async def can_learn(interaction:Interaction,pokemon:str,move_name:int,game_name:str,private:Optional[bool]=False):
     pokemon = pokemon.lower()
     pokemon = pokemon.replace(" ", "")
     try:
@@ -308,7 +308,7 @@ async def can_learn_gamename_auto(interaction, current):
 @can_learn.autocomplete("move_name")
 async def can_learn_move_name_auto(interaction,current):
     return [
-        app_commands.Choice(name=k,value=v)
+        app_commands.Choice(name=" ".join([e.capitalize() for e in k.split("-")]),value=v)
         for k,v in inverse_moveid_dict.items()
         if current.lower() in k
     ][:25]
