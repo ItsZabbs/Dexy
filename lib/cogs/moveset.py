@@ -315,5 +315,6 @@ async def can_learn_move_name_auto(interaction,current):
 async def setup(bot: Bot):
     # moveset.callback=moveset
     bot.add_command(moveset)
+    bot.tree.add_command(can_learn)
     moveset.helpcog = bot.cogs["Pokemon"]
     Pokemon.extracommands = [moveset]
