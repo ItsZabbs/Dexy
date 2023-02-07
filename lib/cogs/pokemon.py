@@ -1995,6 +1995,8 @@ class Pokemon(commands.Cog):
                 except:
                     pass
 
-
+    async def cog_load(self) -> None:
+        if self.bot.get_command('moveset') is not None:
+            self.bot.get_command('moveset').helpcog=self
 async def setup(bot):
     await bot.add_cog(Pokemon(bot))
