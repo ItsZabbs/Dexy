@@ -74,7 +74,7 @@ class Events(commands.Cog):
         embed=discord.Embed(title='An error occurred - ',description=err,colour=ctx.me.colour if ctx.me.colour.value else discord.Colour.blurple())
         value=f'You can check the [wiki](https://ItsZabbs.github.io/Pokedex-Bot{"#"+x if (x:=ctx.command.extras.get("url","").lower()) else ""})'
         embed.add_field(name='Still confused?',value=value)
-        view=ErrorView(message=message,feedback_webhook=self.bot.feedback_webhook)
+        view=ErrorView(message_link=message.jump_url,feedback_webhook=self.bot.feedback_webhook)
         if ctx.guild is None:
             await ctx.send(embed=embed,view=view)
         try:
