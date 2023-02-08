@@ -8,18 +8,18 @@ from discord.ext import commands,tasks
 from lib.bot import Bot
 from lib.db import db
 from discord.ui import View
-class ErrorModal(discord.ui.Modal,title='Error information',timeout=None):
+class ErrorModal(discord.ui.Modal,title='Error information',timeout=5*60):
     error_info=discord.ui.TextInput(label="Do you have any additional info the bot developer should know?",max_length=1024)
     async def on_submit(self, interaction:discord.Interaction) -> None:
         self.new_interaction=interaction
         await interaction.response.send_message("Thanks for your report!")
 
 class ErrorView(View):
-    def __init__(self, *, timeout: 180,message:discord.Message,feedback_webhook:discord.Webhook):
+    def __init__(self, *, timeout: int=180,message:discord.Message,feedback_webhook:discord.Webhook):
         super().__init__(timeout=timeout)
         self.webhook_message=message
         self.feedback_webhook=feedback_webhook
-    @discord.ui.button(label='Do you wish to report this error to the developer?')
+    @discord.ui.button(label='Do you wish to report this error to the developer?',style=discord.ButtonStyle.green)
     async def submit_error(self,interaction:discord.Interaction,button:discord.Button):
         modal=ErrorModal()
         await interaction.response.send_modal(modal)
