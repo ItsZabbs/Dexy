@@ -8,16 +8,18 @@ from discord.ext import commands,tasks
 from lib.bot import Bot
 from lib.db import db
 from discord.ui import View
-class ErrorModal(discord.ui.Modal,title='Error information',timeout=5*60):
+class ErrorModal(discord.ui.Modal):
+    def __init__(self, *, title: str = "Error information", timeout: float = 5*60, custom_id: str = ...) -> None:
+        super().__init__(title=title, timeout=timeout,custom_id=custom_id)
     error_info=discord.ui.TextInput(label="Do you have any additional info the bot developer should know?",max_length=1024)
     async def on_submit(self, interaction:discord.Interaction) -> None:
         self.new_interaction=interaction
         await interaction.response.send_message("Thanks for your report!")
 
 class ErrorView(View):
-    def __init__(self, *, timeout: int=180,message:discord.Message,feedback_webhook:discord.Webhook):
+    def __init__(self, *, timeout: int=180,message_link:str,feedback_webhook:discord.Webhook):
         super().__init__(timeout=timeout)
-        self.webhook_message=message
+        self.webhook_message=message_link
         self.feedback_webhook=feedback_webhook
     @discord.ui.button(label='Do you wish to report this error to the developer?',style=discord.ButtonStyle.green)
     async def submit_error(self,interaction:discord.Interaction,button:discord.Button):
@@ -26,7 +28,7 @@ class ErrorView(View):
         value=await modal.wait()
         if not value:
             return
-        await self.feedback_webhook.send(f"New error report submitted.\nUser info: {modal.error_info.value if modal.error_info.value else 'User did not provide any information.'}\nError Message: [Message Link]{self.webhook_message.jump_url}")
+        await self.feedback_webhook.send(f"New error report submitted.\nUser info: {modal.error_info.value if modal.error_info.value else 'User did not provide any information.'}\nError Message: [Message Link]{self.webhook_message}")
         self.stop()
 class Events(commands.Cog):
     def __init__(self,bot:Bot):
