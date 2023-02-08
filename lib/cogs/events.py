@@ -12,7 +12,7 @@ from discord.ui import View
 
 class ErrorModal(discord.ui.Modal, title="Error information"):
     error_info = discord.ui.TextInput(
-        label="Do you have any additional info the bot developer should know?",
+        label="Any details that the developer should know?",
         max_length=1024,
     )
 
