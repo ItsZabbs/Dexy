@@ -399,7 +399,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             urllist.append(
                 f"[Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/{name})"
             )
-            name = (name.replace("_","-")).lower()
+            name = (name.replace("_","-").replace(".","")).lower()
             urllist.append(f"[PokemonDB](https://pokemondb.net/pokedex/{name})")
             urllist.append(f"[Smogon](https://www.smogon.com/dex/ss/pokemon/{name}/)")
             urllist.append(f"[Serebii](https://www.serebii.net/pokemon/{name})")
