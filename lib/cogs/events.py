@@ -17,7 +17,7 @@ class ErrorModal(discord.ui.Modal, title="Error information"):
     )
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
-        await interaction.response.send_message("Thanks for your report!")
+        await interaction.response.send_message("Thanks for your report!",ephemeral=True)
 
 
 class ErrorView(View):
@@ -45,7 +45,7 @@ class ErrorView(View):
         if value:
             return await interaction.followup.send("Timed out.", ephemeral=True)
         await self.feedback_webhook.send(
-            f"New error report submitted.\nUser info: {modal.error_info.value if modal.error_info.value else 'User did not provide any information.'}\nError Message: [Message Link]{self.webhook_message}"
+            f"New error report submitted.\nUser info: {modal.error_info.value if modal.error_info.value else 'User did not provide any information.'}\nError Message: [Message Link]({self.webhook_message})"
         )
         self.stop()
 
