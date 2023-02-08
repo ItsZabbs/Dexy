@@ -148,6 +148,7 @@ target_dict = {
     12: "Entire Side",
     13: "User and Allies",
     14: "All Pokemon",
+    16: "Target and Self"
 }
 abil_rating_dict = {
     -3: "Absolute Trash",
