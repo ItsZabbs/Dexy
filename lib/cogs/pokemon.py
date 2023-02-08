@@ -399,10 +399,10 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             urllist.append(
                 f"[Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/{name})"
             )
-            name = (name.replace("_","-").replace(".","")).lower()
-            urllist.append(f"[PokemonDB](https://pokemondb.net/pokedex/{name})")
-            urllist.append(f"[Smogon](https://www.smogon.com/dex/ss/pokemon/{name}/)")
-            urllist.append(f"[Serebii](https://www.serebii.net/pokemon/{name.replace('-','')})")
+            newname = (name.replace("_","-").replace(".","")).lower()
+            urllist.append(f"[PokemonDB](https://pokemondb.net/pokedex/{newname})")
+            urllist.append(f"[Smogon](https://www.smogon.com/dex/ss/pokemon/{newname}/)")
+            urllist.append(f"[Serebii](https://www.serebii.net/pokemon/{name.replace('_','')})")
         embed.add_field(name="**Height**", value=f"{height}m", inline=False)
         embed.add_field(name="**Weight**", value=f"{weight}kg", inline=True)
         embed.add_field(name="**Smogon Tier**", value=tier, inline=True)
