@@ -402,7 +402,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             newname = (name.replace("_","-").replace(".","")).lower()
             urllist.append(f"[PokemonDB](https://pokemondb.net/pokedex/{newname})")
             urllist.append(f"[Smogon](https://www.smogon.com/dex/ss/pokemon/{newname}/)")
-            urllist.append(f"[Serebii](https://www.serebii.net/pokemon/{name.replace('_','')})")
+            urllist.append(f"[Serebii](https://www.serebii.net/pokemon/{name.replace('_','').lower()})")
         embed.add_field(name="**Height**", value=f"{height}m", inline=False)
         embed.add_field(name="**Weight**", value=f"{weight}kg", inline=True)
         embed.add_field(name="**Smogon Tier**", value=tier, inline=True)
