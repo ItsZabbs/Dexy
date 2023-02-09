@@ -10,10 +10,10 @@ role:Optional[Role]=None
 @guilds(Object(rpokemon_guild_id))
 async def use(interaction:Interaction,move:str):
     if move.lower().replace(" ","").strip().replace("-","")=="secretpower":
-        await interaction.user.add_roles(roles=[role],reason='Used secret power')
-        await interaction.response.send_message("You used Secret Power! You discovered #secret_base!")
+        await interaction.user.add_roles(role,reason='Used secret power')
+        await interaction.response.send_message("You used Secret Power! You discovered #secret_base!",ephemeral=True)
     else:
-        await interaction.response.send_message("There was no effect...")
+        await interaction.response.send_message("There was no effect...",ephemeral=True)
 @use.autocomplete(name='move')
 async def autocomplete(interaction:Interaction,current:str):
     return [
