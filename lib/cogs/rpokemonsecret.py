@@ -9,7 +9,7 @@ role:Optional[Role]=None
 @command(name='use',description='Use a move')
 @guilds(Object(rpokemon_guild_id))
 async def use(interaction:Interaction,move:str):
-    if move.lower().replace(" ","").strip()=="secretpower":
+    if move.lower().replace(" ","").strip().replace("-","")=="secretpower":
         await interaction.user.add_roles(roles=[role],reason='Used secret power')
         await interaction.response.send_message("You used Secret Power! You discovered #secret_base!")
     else:
