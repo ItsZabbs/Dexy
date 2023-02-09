@@ -16,6 +16,8 @@ error_webhook = os.getenv("ERROR_WEBHOOK")
 feedback_webhook=os.getenv("FEEDBACK_WEBHOOK")
 guild_webhook=os.getenv('GUILD_WEBHOOK')
 command_webhook=os.getenv('COMMAND_WEBHOOK')
+rpokemon_guild_id=os.getenv('RPOKEMON_GUILD_ID')
+secret_role_id=os.getenv('SECRET_ROLE_ID')
 
 intents = discord.Intents.none()
 intents.messages=True
@@ -67,6 +69,7 @@ class Bot(commands.AutoShardedBot):
         self.owner_id = OWNER_ID
         self.reconnect = True
         self.prefix_cache=prefix_cache
+        self.rpokemon_guild_id=int(rpokemon_guild_id)
         super().__init__(case_insensitive=True, allowed_mentions=mentions, intents=intents,
                          command_prefix=get_prefix,strip_after_prefix=True,
                          owner_id=OWNER_ID,max_messages=None)
