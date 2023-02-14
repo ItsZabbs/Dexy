@@ -716,7 +716,7 @@ class Pokemon(commands.Cog):
             f"UPDATE guilds SET AliSprites=? WHERE GuildID = {ctx.guild.id}",
             existingsprites,
         )
-        await ctx.message.add_reaction("<:greenTick:596576670815879169>")
+        await ctx.message.add_reaction("✅")
 
     @alias.command(
         name="remove",
@@ -772,7 +772,7 @@ class Pokemon(commands.Cog):
             f"UPDATE guilds SET AliSprites=? WHERE GuildID = {ctx.guild.id}",
             existingsprites,
         )
-        await ctx.message.add_reaction("<:greenTick:596576670815879169>")
+        await ctx.message.add_reaction("✅")
 
     @alias.command(
         name="list", extras={"url": "span-stylecoloryellowhow-to-list-all-aliases-span"}
