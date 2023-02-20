@@ -1748,6 +1748,8 @@ class Pokemon(commands.Cog):
             colour = pokedex_dict[close]["color"]
         if pokemon_id <= 0:
             return await ctx.send("Fakemons aren't available")
+        if pokemon_id >= 899:
+            return await ctx.send("Sorry, but only Pokemon till Generation 8 (SwSh) are supported.\nThe developer does not plan to add the latest Pokemon's evolutions due to the various different complicated evolution lines introduced.")
         try:
             evol_line = evol_lines[str(pokemon_id).lower()]
         except KeyError:
