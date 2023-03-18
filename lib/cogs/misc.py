@@ -26,7 +26,7 @@ class Misc(commands.Cog):
         return super().cog_unload()
     @commands.hybrid_command(name='invite',help='Provides an invite link for the bot',extras={"url":"invite"})
     async def sendinvite(self,ctx):
-        embed = discord.Embed(title=f'Add Pokedex Bot to your server!',colour=ctx.author.colour,description=f"Click **[here](https://discord.com/oauth2/authorize?client_id=853556227610116116&permissions=277092812864&scope=bot%20applications.commands)** to invite the bot to your server!")
+        embed = discord.Embed(title=f'Add {self.bot.user.name} to your server!',colour=ctx.author.colour,description=f"Click **[here](https://discord.com/oauth2/authorize?client_id=853556227610116116&permissions=277092812864&scope=bot%20applications.commands)** to invite the bot to your server!")
         await ctx.send(embed=embed)
     @commands.command(name='killtab')
     @commands.check(check_meme_server)
@@ -127,9 +127,9 @@ class Misc(commands.Cog):
     @tasks.loop(minutes=5.0)
     async def presence_update(self):
         if self.presence_update.current_loop%2:
-            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for @Pokedex Bot invite!"))
+            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"for @{self.bot.user.name} invite!"))
         else:
-            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for @Pokedex Bot help!"))
+            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"for @{self.bot.user.name} help!"))
     @presence_update.before_loop
     async def before_presence(self):
         print('waiting...')
