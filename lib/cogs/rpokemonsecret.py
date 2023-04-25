@@ -5,7 +5,7 @@ from discord import Interaction,Role,Object,Member,Role,Guild
 from typing import Optional
 
 role:Optional[Role]=None
-assert isinstance(rpokemon_guild_id,int) and isinstance(secret_role_id,int)
+assert rpokemon_guild_id is not None and secret_role_id is not None
 
 @command(name='use',description='Use a move')
 @guilds(Object(rpokemon_guild_id))
@@ -28,5 +28,5 @@ async def setup(bot:Bot):
     bot.tree.add_command(use)
     global role
     await bot.wait_until_ready()
-    role=(await bot.fetch_guild(int(rpokemon_guild_id))).get_role(secret_role_id)
+    role=(await bot.fetch_guild(int(rpokemon_guild_id))).get_role(int(secret_role_id))
     assert isinstance(role,Role)
