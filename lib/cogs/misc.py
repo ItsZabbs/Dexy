@@ -44,6 +44,7 @@ class Misc(commands.Cog):
     @prefix.command(name="add",help='Adds a prefix , max length is 10 chars',extras={"url":"span-stylecoloryellowhow-to-add-a-prefix-span"})
     @commands.has_permissions(manage_guild=True)
     async def add_prefix(self, ctx, new):
+        return await ctx.send("Prefix commands are disabled for the moment. A database update is happening. Try again in around 24 hours.")
         if len(new) > 10:
             return await ctx.send("The prefix can not be more than 10 characters in length.")
         elif " " in new or "," in new:
@@ -59,6 +60,7 @@ class Misc(commands.Cog):
     @commands.has_permissions(manage_guild=True)
     async def remove_prefix(self,ctx,old):
         '''Removes a prefix from the current existing prefixes'''
+        return await ctx.send("Prefix commands are disabled for the moment. A database update is happening. Try again in around 24 hours.")
         prefixes :list= (db.field("SELECT Prefix FROM guilds WHERE GuildID =?", ctx.guild.id)).split(",")
         try:
             prefixes.remove(old)
