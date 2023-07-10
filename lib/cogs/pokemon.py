@@ -659,6 +659,7 @@ class Pokemon(commands.Cog):
         ),
     ):
         """Adds an alias to a sprite for easy access and memes"""
+        return await ctx.send("Alias commands are disabled for the moment. A database update is happening. Try again in around 24 hours.")
         sprite = sprite.lower()
         alias = alias.lower()
         back, shiny, sprite_type, pokemon = await convert_string_sprite_to_structured(
@@ -727,6 +728,7 @@ class Pokemon(commands.Cog):
         self, ctx, alias: str = parameter(description="The alias to remove.")
     ):
         """Removes an existing alias"""
+        return await ctx.send("Alias commands are disabled for the moment. A database update is happening. Try again in around 24 hours.")
         if ctx.guild.id in self.bot.alias_cache:
             existingaliases, existingsprites = self.bot.alias_cache[ctx.guild.id]
         else:
