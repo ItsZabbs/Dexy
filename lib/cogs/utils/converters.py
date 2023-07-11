@@ -52,7 +52,7 @@ else:
                 if name is not None:return name.replace("-","")
                 raise BadArgument("Could not find that Pokemon.")
             else:
-                raise BadArgument("Could not find that Pokemon."+f" Were you looking for `{name}`" if (name:=get_close_matches(pokemon,pokemon_names)) is not None else "")
+                raise BadArgument("Could not find that Pokemon."+f" Were you looking for `{name}`?" if (name:=get_close_matches(pokemon,pokemon_names)) is not None else "")
 
     class SpriteConverter(Converter):
         """Convert a string into a Sprite Named Tuple"""
