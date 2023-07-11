@@ -1,23 +1,26 @@
-from sqlite3 import IntegrityError
+import asyncpg
 import discord
 from discord.ext import commands
 import dotenv
 import os
-from glob import glob
 import traceback
 import logging
+from asyncpg import Connection
+from asyncpg.exceptions import UniqueViolationError
 
 from ..db import db
 
 # Loading the environment variables
 dotenv.load_dotenv()
 token = os.getenv("BOT_TOKEN")
+test_token=os.getenv("TEST_BOT_TOKEN")
 error_webhook = os.getenv("ERROR_WEBHOOK")
 feedback_webhook=os.getenv("FEEDBACK_WEBHOOK")
 guild_webhook=os.getenv('GUILD_WEBHOOK')
 command_webhook=os.getenv('COMMAND_WEBHOOK')
 rpokemon_guild_id=os.getenv('RPOKEMON_GUILD_ID')
 secret_role_id=os.getenv('SECRET_ROLE_ID')
+assert None not in (token,error_webhook,feedback_webhook,guild_webhook,command_webhook,rpokemon_guild_id,secret_role_id)
 
 intents = discord.Intents.none()
 intents.messages=True
@@ -28,8 +31,8 @@ intents.message_content=True
 mentions = discord.AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
 
 # Owner IDS
-OWNER_ID = int(os.getenv("OWNER_ID"))
-
+assert (OWNER_ID:=os.getenv("OWNER_ID")) is not None and OWNER_ID.isdigit()
+OWNER_ID=int(OWNER_ID)
 #Logging
 discord.utils.setup_logging(level=logging.INFO)
 
@@ -41,34 +44,27 @@ async def get_prefix(user,message):
     if message.guild is None:
         prefix = "dexy"
         return commands.when_mentioned_or(prefix)(user, message)
-    elif message.guild.id in prefix_cache:
-        return commands.when_mentioned_or(*prefix_cache[message.guild.id])(user, message)
-    else:
-        prefix:str=db.field("SELECT Prefix FROM guilds WHERE GuildID = ?",message.guild.id)
-    if prefix:
-        prefix=prefix.split(",")
-    else:
-        prefix=['dexy']
-    if len(prefix_cache)>200:
-        prefix_cache.pop(tuple(prefix_cache.keys())[0])
-    prefix_cache[message.guild.id]=prefix
-    return commands.when_mentioned_or(*prefix_cache[message.guild.id])(user, message)
+    assert isinstance(s:=await db.prefix_cache[message.guild.id],list)
+    return commands.when_mentioned_or(*s)(user,message)
 
 
 async def update():
-    for guild in bot.guilds:
-        try:
-            db.execute("INSERT INTO guilds (GuildID) VALUES (?)", guild.id)
-        except IntegrityError:
-            pass
-
+    async with db.pool.acquire() as conn:
+        assert isinstance(conn,Connection)
+        for guild in bot.guilds:
+            try:
+                await conn.execute("INSERT INTO GuildData (GuildID) VALUES ($1)", guild.id)
+            except UniqueViolationError:
+                pass
+            
 class Bot(commands.AutoShardedBot):
     def __init__(self):
         self.TOKEN = token
         self.ready = False
-        self.owner_id = OWNER_ID
         self.reconnect = True
-        self.prefix_cache=prefix_cache
+        self.prefix_cache=db.prefix_cache
+        self.alias_cache=db.alias_cache
+        assert isinstance(rpokemon_guild_id,str)
         self.rpokemon_guild_id=int(rpokemon_guild_id)
         super().__init__(case_insensitive=True, allowed_mentions=mentions, intents=intents,
                          command_prefix=get_prefix,strip_after_prefix=True,
@@ -76,11 +72,12 @@ class Bot(commands.AutoShardedBot):
 
 
     async def setup_hook(self):
-        self.error_webhook=await self.fetch_webhook(error_webhook)
-        self.feedback_webhook=await self.fetch_webhook(feedback_webhook)
-        self.guild_webhook=await self.fetch_webhook(guild_webhook)
-        self.command_webhook=await self.fetch_webhook(command_webhook)
-        for ext in os.listdir("./lib/cogs"):
+        assert isinstance(error_webhook,str) and isinstance(feedback_webhook,str) and isinstance(guild_webhook,str) and isinstance(command_webhook,str)
+        self.error_webhook=await self.fetch_webhook(int(error_webhook))
+        self.feedback_webhook=await self.fetch_webhook(int(feedback_webhook))
+        self.guild_webhook=await self.fetch_webhook(int(guild_webhook))
+        self.command_webhook=await self.fetch_webhook(int(command_webhook))
+        for ext in reversed(os.listdir("./lib/cogs")): #temp fix to let moveset load after pokemon is loaded
             if ext.endswith(".py") and not ext.startswith("_"):
                 try:
                     await self.load_extension(f"lib.cogs.{ext[:-3]}")
@@ -90,16 +87,12 @@ class Bot(commands.AutoShardedBot):
                     print(desired_trace)
                     
         await self.load_extension('jishaku')
-    async def start(self) -> None:
-        await super().start(token, reconnect=True)
-    # def run(self, version):
-
-    #     print("running setup...")
-    #     self.setup()
-
-    #     print("running bot...")
-
-    #     super().run(self.TOKEN, reconnect=True)
+        self.pool=await db.setup_database()
+        
+    async def start(self,test:bool=False) -> None:
+        bot_token=token if not test else test_token
+        assert isinstance(bot_token,str)
+        await super().start(bot_token, reconnect=True)
 
     async def process_commands(self, message):
         ctx = await self.get_context(message, cls=commands.Context)
@@ -113,58 +106,11 @@ class Bot(commands.AutoShardedBot):
 
     async def on_connect(self):
         await update()
+        print('Updated all guild IDs in database')
 
-    # async def on_command_error(self, ctx:commands.Context, err):
-    #     embed=discord.Embed(title='An error occurred',colour=ctx.me.colour)
-    #     embed.add_field(name='Error description',value=err,inline=False)
-    #     value='Ask about this in the [support server](https://discord.gg/FBFTYp7nnq)'
-    #     try:
-    #         url=ctx.command.extras["url"]
-    #         value=value+f' \n or you can check the [wiki](https://ItsZabbs.github.io/Pokedex-Bot#{url})'
-    #     except:
-    #         pass
-    #     embed.add_field(name='Still confused?',value=value)
-    #     try:
-    #         perms=ctx.channel.permissions_for(ctx.guild.me)
-    #         if perms.send_messages and perms.embed_links:
-    #             await ctx.send(embed=embed)#f"Something went wrong \n ```\n{err}\n```")
-    #         elif perms.send_messages:
-    #             await ctx.send("Please ensure that I have the SEND MESSAGES and EMBED LINKS permissions here")
-    #         elif not perms.send_messages:
-    #             await ctx.author.send(f"Please ensure that I have the SEND MESSAGES and EMBED LINKS permissions in {ctx.channel.mention} ")
-    #     except:
-    #         try:
-    #             await ctx.author.send(f"I cannot send embeds or messages in {ctx.channel.mention}!\n Please ensure that I have the SEND MESSAGES and EMBED LINKS permissions for that channel.")
-    #         except:
-    #             pass
-    #     try:
-    #         embed=discord.Embed(title='Error',description=f'{err}')
-    #         embed.add_field(name='Command used -',value=f'{ctx.message.content}',inline=False)
-    #         embed.add_field(name='Command user - ',value=f"{ctx.author.id}",inline=False)
-    #         await self.error_webhook.send(embed=embed)
-    #     except:
-    #         raise err
-
-    # async def on_guild_join(self, guild:discord.Guild):
-    #     try:
-    #         db.execute("INSERT INTO guilds (GuildID) VALUES (?)", guild.id)
-    #     except:
-    #         pass
-    #     embed=discord.Embed(title='Guild added',description=f'ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME: {await self.user(guild.owner_id)}')#\n OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
-    #     await self.guild_log.send(embed=embed)
-    
-    # async def on_guild_remove(self, guild:discord.Guild):
-    #     embed=discord.Embed(title='Guild left',description=f'ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME : {await self.user(guild.owner_id)}')# OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
-    #     await self.guild_log.send(embed=embed)
-    
-    
-        
-    # async def on_guild_(self, guild):
-    #     db.execute("DELETE FROM guilds WHERE GuildID = ?", guild.id)
     async def on_message(self, message:discord.Message):
         if message.author.bot:return
         if message.author == self.user:return
-        #if message.author.id!=650664682046226432:return
         return await super().on_message(message)
     async def on_ready(self):
         await update()

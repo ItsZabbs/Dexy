@@ -5,30 +5,31 @@ from discord.ext import commands
 from time import time
 from discord.ext import tasks
 from discord.ext.commands.cooldowns import BucketType
+from discord.ext.commands import command,Context,hybrid_command
 from random import choice
+
 
 from ..db import db
 from ..bot import Bot
 
 memes=['SPOILER_3.gif', 'SPOILER_1.jpg', 'SPOILER_2.gif']
 
+def check_meme_server(ctx:Context):
+    return ctx.guild is not None and ctx.guild.id==857700650992795648
 class Misc(commands.Cog):
     '''Miscellaneous commands'''
     url="miscellaneous"
-    def check_meme_server(ctx:commands.Context):
-        if ctx.guild==None:return False
-        return ctx.guild.id==857700650992795648
     def __init__(self, bot:Bot):
         self.bot = bot
         self.presence_update.start()
     def cog_unload(self):
         self.presence_update.cancel()
         return super().cog_unload()
-    @commands.hybrid_command(name='invite',help='Provides an invite link for the bot',extras={"url":"invite"})
+    @hybrid_command(name='invite',help='Provides an invite link for the bot',extras={"url":"invite"})
     async def sendinvite(self,ctx):
         embed = discord.Embed(title=f'Add Pokedex Bot to your server!',colour=ctx.author.colour,description=f"Click **[here](https://discord.com/oauth2/authorize?client_id=853556227610116116&permissions=277092812864&scope=bot%20applications.commands)** to invite the bot to your server!")
         await ctx.send(embed=embed)
-    @commands.command(name='killtab')
+    @command(name='killtab')
     @commands.check(check_meme_server)
     async def killtab(self,ctx):
         # embed=discord.Embed(colour=ctx.author.colour)
@@ -46,42 +47,37 @@ class Misc(commands.Cog):
     async def add_prefix(self, ctx, new):
         if len(new) > 10:
             return await ctx.send("The prefix can not be more than 10 characters in length.")
-        elif " " in new or "," in new:
-            return await ctx.send("The prefix cannot contain a space or a comma!")
-        else:
-            prefixes = (db.field("SELECT Prefix FROM guilds WHERE GuildID =?", ctx.guild.id)).split()
-            prefixes.append(new)
-            db.execute("UPDATE guilds SET Prefix = ? WHERE GuildID = ?", ",".join(prefixes), ctx.guild.id)
-            self.bot.prefix_cache.update({ctx.guild.id:prefixes})
-            await ctx.send(f'All prefixes are {",".join(prefixes)}')
+        await db.insert_new_prefix(ctx.guild.id,new)
+        prefixes=await db.prefix_cache[ctx.guild.id]
+        assert isinstance(prefixes,list)
+        embed=discord.Embed(title='All prefixes are:',description="\n".join([f"{i}. `{prefix}`" for i,prefix in enumerate(prefixes,start=1)]))
+        await ctx.send(embed=embed)
 
     @prefix.command(name='remove',extras={"url":"span-stylecoloryellowhow-to-remove-a-prefix-span"})
     @commands.has_permissions(manage_guild=True)
-    async def remove_prefix(self,ctx,old):
+    async def remove_prefix(self,ctx,old:str):
         '''Removes a prefix from the current existing prefixes'''
-        prefixes :list= (db.field("SELECT Prefix FROM guilds WHERE GuildID =?", ctx.guild.id)).split(",")
-        try:
-            prefixes.remove(old)
-        except ValueError:
-            return await ctx.send("You never had that prefix!")
-        db.execute("UPDATE guilds SET Prefix = ? WHERE GuildID = ?", ",".join(prefixes), ctx.guild.id)
-        if not prefixes:
-            prefixes=["dexy"]
-        self.bot.prefix_cache.update({ctx.guild.id:prefixes})
-        await ctx.send(f"All prefixes are {','.join(prefixes)}")
+        await db.remove_prefix(ctx.guild.id,old)
+        if not await db.prefix_cache[ctx.guild.id]:
+            await db.insert_new_prefix(ctx.guild.id,"dexy")
+        prefixes=await db.prefix_cache[ctx.guild.id]
+        assert isinstance(prefixes,list)
+        embed=discord.Embed(title='All prefixes are:',description="\n".join([f"{i}. `{prefix}`" for i,prefix in enumerate(prefixes,start=1)]))
+        await ctx.send(embed=embed)
     @prefix.command(name='list',extras={"url":"span-stylecoloryellowhow-to-list-all-prefixes-span"})
     async def list_prefix(self,ctx):
         '''Lists all the server's prefixes'''
-        prefixes :list= (db.field("SELECT Prefix FROM guilds WHERE GuildID =?", ctx.guild.id)).split()
-        prefixes=",".join(prefixes)
-        await ctx.send(f"{'All prefixes are '+prefixes if prefixes else 'There are no prefixes'}")
+        prefixes=await db.prefix_cache[ctx.guild.id]
+        assert isinstance(prefixes,list)
+        embed=discord.Embed(title='All prefixes are:',description="\n".join([f"{i}. `{prefix}`" for i,prefix in enumerate(prefixes,start=1)]) or f"It seems like there are no prefixes. Add one using {ctx.prefix} prefix add <prefix>")
+        await ctx.send(embed=embed)
     @prefix.error
     async def add_prefix_error(self, ctx, exc):
         if isinstance(exc, commands.CheckFailure):
             await ctx.send("You need the Manage Server permission to do that.")
 
-    @commands.hybrid_command(name='ping',aliases=['latency'],extras={"url":"ping"})
-    async def ping_command(self,ctx:commands.Context):
+    @hybrid_command(name='ping',aliases=['latency'],extras={"url":"ping"})
+    async def ping_command(self,ctx:Context):
         '''Ping Pong!'''
         start = time()
         if isinstance(ctx.interaction,discord.Interaction):
@@ -92,17 +88,17 @@ class Misc(commands.Cog):
             message = await ctx.send(f"Pong! DWSP latency: {self.bot.latency * 1000:,.0f} ms.")
             end = time()
             await message.edit(content=f"Pong! DWSP latency: {self.bot.latency * 1000:,.0f} ms. Response time: {(end - start) * 1000:,.0f} ms.")
-    @commands.hybrid_command(name='about',aliases=['info'],extras={"url":"about"})
-    async def about_command(self,ctx:commands.Context):
+    @hybrid_command(name='about',aliases=['info'],extras={"url":"about"})
+    async def about_command(self,ctx:Context):
         '''Sends information about the bot and its developer'''
         embed=discord.Embed(title="About me",description=f'I was given life by <@!{self.bot.owner_id}> (Zabbs#6530)! \n See `{("@"+ctx.me.name) if ctx.prefix=="/" else "dexy"} help Pokemon` for all my Pokemon utilities!',colour=ctx.me.colour)
         embed.set_author(name=ctx.me.name,icon_url=ctx.me.avatar.url)
         embed.set_footer(text='The Discord bot Beheeyem\'s design for embeds and data presentation has been used')
         await ctx.send(embed=embed)
     @commands.cooldown(1,60.0,BucketType.user)
-    @commands.hybrid_command(name='feedback',aliases=['feed','back'],extras={"url":"feedback"})
+    @hybrid_command(name='feedback',aliases=['feed','back'],extras={"url":"feedback"})
     @app_commands.describe(feedback="The feedback you want to send!",private="If you want others to see your feedback")
-    async def feedback(self,ctx:Union[commands.Context,discord.Interaction],*,feedback,private:Optional[bool]=True):
+    async def feedback(self,ctx:Union[Context,discord.Interaction],*,feedback,private:Optional[bool]=True):
         '''Any kind of feedback or questions are accepted. Even any concerns regarding the bot.'''
         if len(feedback)>1024:
             return await ctx.send("Please limit your feedback to 1024 characters or less")
@@ -111,7 +107,7 @@ class Misc(commands.Cog):
         embed.add_field(name='Feedback',value=feedback,inline=False)
         await self.bot.feedback_webhook.send(embed=embed)
         if isinstance(ctx.interaction,discord.Interaction):
-            await ctx.send("Feedback sent!",ephemeral=private)
+            await ctx.send("Feedback sent!",ephemeral=private if private is not None else False)
         else:
             await ctx.message.add_reaction('✅')
     
@@ -126,13 +122,11 @@ class Misc(commands.Cog):
 
     @tasks.loop(minutes=5.0)
     async def presence_update(self):
-        if self.presence_update.current_loop%2:
-            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for @Pokedex Bot invite!"))
-        else:
-            await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for @Pokedex Bot help!"))
+        assert self.bot.user is not None
+        await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"for @{self.bot.user.name}"+('help!') if self.presence_update.current_loop%2 else 'invite!'))
     @presence_update.before_loop
     async def before_presence(self):
-        print('waiting...')
+        print('waiting to update presence until ready...')
         await self.bot.wait_until_ready()
 async def setup(bot):
     await bot.add_cog(Misc(bot))

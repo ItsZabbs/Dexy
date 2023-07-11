@@ -4,10 +4,10 @@ from discord.ext import menus,commands
 from discord import ui
 from discord.ext.commands import Command,Cog
 USER_HELP_MENU_LIST=[
-                    discord.SelectOption(label='Pokemon',value=0,description='Pokemon information related',emoji="<:Pokeball:743294950355107861>"),
-                    discord.SelectOption(label='Misc',value=1,description='Miscellaneous.',emoji="❓"),
-                    discord.SelectOption(label='Meta',value=2,description='Bot statistics related.',emoji='ℹ️'),
-                    discord.SelectOption(label='Help',value=3,description='Help command')
+                    discord.SelectOption(label='Pokemon',value='0',description='Pokemon information related',emoji="<:Pokeball:743294950355107861>"),
+                    discord.SelectOption(label='Misc',value='1',description='Miscellaneous.',emoji="❓"),
+                    discord.SelectOption(label='Meta',value='2',description='Bot statistics related.',emoji='ℹ️'),
+                    discord.SelectOption(label='Help',value='3',description='Help command')
                     ]
 
 def support_field(embed:discord.Embed,name="")->discord.Embed:
@@ -24,7 +24,6 @@ class HelpPageSource(menus.ListPageSource):
         return f"**{key}**",value
     async def format_page(self, menu, entries:dict[str,dict[str,str]]):
         page = menu.current_page
-        menu.ctx.author:discord.Member=menu.ctx.author
         max_page = self.get_max_pages()
         page_content = "**"+tuple(entries.keys())[0]+":**"
         embed = discord.Embed(
@@ -51,13 +50,14 @@ class MyMenuPages(ui.View, menus.MenuPages):
         self._source = source
         self.current_page = 0
         self.ctx = None
-        self.message = None
+        self.message:Optional[discord.Message] = None
         self.delete_message_after = delete_message_after
     async def on_timeout(self) -> None:
         self.select_menu.disabled=True
-        for button in self.children:
-            button.disabled=True
-        return await self.message.edit(view=self)
+        for item in self.children:
+            item.disabled=True#type:ignore
+        assert self.message is not None
+        await self.message.edit(view=self)
     async def send_initial_message(self, ctx, channel):
         return await super().send_initial_message(ctx, channel)
     async def start(self, ctx, *, channel=None, wait=False):
@@ -66,12 +66,14 @@ class MyMenuPages(ui.View, menus.MenuPages):
         self.message = await self.send_initial_message(ctx, ctx.channel)
     async def _get_kwargs_from_page(self, page):
         value = await super()._get_kwargs_from_page(page)
+        assert value is not None
         if 'view' not in value:
             value.update({'view': self})
         return value
 
     async def interaction_check(self, interaction):
-        """Only allow the author that invoke the command to be able to use the interaction"""
+        """Only allow the author to be able to use the interaction"""
+        assert self.ctx is not None
         return interaction.user == self.ctx.author
     @ui.select(placeholder='Select a category',options=USER_HELP_MENU_LIST)
     async def select_menu(self,interaction:discord.Interaction,select_value:ui.Select):
@@ -93,6 +95,7 @@ class MyMenuPages(ui.View, menus.MenuPages):
         await interaction.response.defer()
         self.stop()
         if self.delete_message_after:
+            assert self.message is not None
             await self.message.delete(delay=0)
 
     @ui.button(emoji='⏩', style=discord.ButtonStyle.blurple)
@@ -114,11 +117,12 @@ class MyHelp(commands.MinimalHelpCommand):
     def get_destination(self) -> commands.Context:
         return self.context
     async def send_bot_help(self, mapping:Mapping[Optional[Cog],List[Command]]):
-        all_commands:Dict[int,Dict[str,list]]=dict()
+        all_commands:Dict[int,Dict[str,Dict[str,str]]]=dict()
         for command in mapping[None]:
-            if getattr(command,"helpcog",None) is not None:
-                i=mapping.get(command.helpcog)
-                i.append(command)
+            if command.extras.get('helpcog',None) is not None:
+                parentcog_commands=mapping.get(command.extras['helpcog'])
+                if parentcog_commands is None:continue
+                parentcog_commands.append(command)
                 mapping[None].remove(command)
         #sorted_mapping=dict(sorted(mapping.items(),key=lambda item:item[0].qualified_name if item[0] else "No Category"),reverse=True)
         for cog,commands in mapping.items():
@@ -156,10 +160,7 @@ category\n Or use {self.clean_prefix(ctx)} help <command> for more info on a com
                 #helper=e.help.split('\n')[0] if e.help else "No Help provided"
                 helper=e.help.split("\n")[0].replace("[prefix]",self.clean_prefix(ctx)) if e.help else "No Help provided"
                 embed.add_field(name=e.name,value=helper,inline=False)
-            try:
-                url=cog.url
-            except:
-                url=""
+            url=getattr(cog,"url","")
             embed=support_field(embed,url)
             await ctx.send(embed=embed)
         else:

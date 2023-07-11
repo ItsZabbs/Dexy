@@ -1,5 +1,5 @@
 import datetime
-from sqlite3 import IntegrityError
+from asyncpg import UniqueViolationError
 import traceback
 from typing import Union
 
@@ -69,12 +69,15 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
         try:
-            db.execute("INSERT INTO guilds (GuildID) VALUES (?)", guild.id)
-        except IntegrityError:
-            pass
+            async with self.bot.pool.acquire() as conn:
+                await conn.execute("INSERT INTO GuildData (GuildID) VALUES ($1)", guild.id)
+        except UniqueViolationError:
+            title="Guild added which existed in DB before"
+        else:
+            title="Guild added"
         embed = discord.Embed(
-            title="Guild added",
-            description=f"ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME: {await self.bot.fetch_user(guild.owner_id)}",
+            title=title,
+            description=f"ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME: {await self.bot.fetch_user(guild.owner_id)}\n MEMBER COUNT: {guild.member_count}",
             colour=discord.Color.green(),
         )  # \n OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
         await self.bot.guild_webhook.send(embed=embed)
@@ -84,7 +87,7 @@ class Events(commands.Cog):
     async def on_guild_remove(self, guild: discord.Guild):
         embed = discord.Embed(
             title="Guild left",
-            description=f"ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME : {await self.bot.fetch_user(guild.owner_id)}",
+            description=f"ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME : {await self.bot.fetch_user(guild.owner_id)} MEMBER COUNT: {guild.member_count}",
             colour=discord.Color.red(),
         )  # OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
         await self.bot.guild_webhook.send(embed=embed)
@@ -134,7 +137,7 @@ class Events(commands.Cog):
             description=err,
             colour=ctx.me.colour if ctx.me.colour.value else discord.Colour.blurple(),
         )
-        value = f'You can check the [wiki](https://ItsZabbs.github.io/Pokedex-Bot{"#"+x if (x:=ctx.command.extras.get("url","").lower()) else ""})'
+        value = f'You can check the [wiki](https://ItsZabbs.github.io/Pokedex-Bot{"#"+x if (x:=ctx.command.extras.get("url","").lower()) else ""})\n{"Or you can [join the support server](https://discord.gg/FBFTYp7nnq)" if ctx.guild and ctx.guild.id!=self.bot.rpokemon_guild_id else ""}'
         embed.add_field(name="Still confused?", value=value)
         view = ErrorView(
             message_link=message.jump_url, feedback_webhook=self.bot.feedback_webhook
@@ -175,3 +178,4 @@ class Events(commands.Cog):
 
 async def setup(bot: Bot):
     await bot.add_cog(Events(bot))
+    

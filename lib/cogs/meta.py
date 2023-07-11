@@ -1,7 +1,4 @@
-import asyncio
 import copy
-import os
-import traceback
 from datetime import datetime, timedelta
 from platform import python_version
 from time import time
@@ -10,27 +7,29 @@ from typing import Union, Optional
 import discord
 from discord import Activity, ActivityType
 from discord.ext import tasks
-from discord.ext import commands
+from discord.ext.commands import Context,CommandInvokeError,Cog,command,CheckFailure
 from psutil import Process, virtual_memory
 
 from ..db import db
+from lib.bot import Bot
 
-
-class Meta(commands.Cog):
+class Meta(Cog):
     '''Bot owner commands'''
 
-    def __init__(self, bot):
+    def __init__(self, bot:Bot):
         self.bot = bot
         self._message = "watching for dexy help | Report any errors to Zabbs#6530!"
     async def cog_check(self, ctx):
+        assert ctx.command is not None
         if ctx.command.name=="stats":
             return True
         return ctx.author.id==650664682046226432
-    @commands.command(name='leaveguild')
+    @command(name='leaveguild')
     async def leaveguild(self,ctx,GuildID:Optional[discord.Guild]):
         if GuildID is None:GuildID=self.bot.get_guild(ctx.guild.id)
+        assert GuildID is not None
         await GuildID.leave()
-        owner=self.bot.get_user(650664682046226432)
+        assert self.bot.owner_id is not None and (owner:=self.bot.get_user(self.bot.owner_id)) is not None
         await owner.send(f"The bot has successfully left {GuildID.name}")
     @property
     def message(self):
@@ -50,7 +49,7 @@ class Meta(commands.Cog):
             name=_name, type=getattr(ActivityType, _type, ActivityType.playing)
         ))
 
-    @commands.command(name="setactivity")
+    @command(name="setactivity")
     async def set_activity_message(self, ctx, *, text: str):
         '''Sets the status of the bot
         Can be either Playing,Watching,Listening or Streaming
@@ -147,12 +146,13 @@ class Meta(commands.Cog):
     #                     )
     #             await ctx.send(embed=embed)
 
-    @commands.command(name="stats")
+    @command(name="stats")
     async def show_bot_stats(self, ctx):
         '''Shows the bot's stats'''
         embed = discord.Embed(title="Bot stats",
                               colour=ctx.author.colour,
                               timestamp=datetime.utcnow())
+        assert self.bot.user is not None and self.bot.user.avatar is not None
         embed.set_thumbnail(url=self.bot.user.avatar.url)
 
         proc = Process()
@@ -178,33 +178,32 @@ class Meta(commands.Cog):
     
     @show_bot_stats.error
     async def stats_error(self,ctx,error):
-        if isinstance(error,commands.CheckFailure):
+        if isinstance(error,CheckFailure):
             await ctx.send("This command is reserved for the bot developer. You should try using the `ldex` command instead!")
-    @commands.command(name="shutdown")
-    async def shutdown(self, ctx):
+    @command(name="shutdown")
+    async def shutdown(self, ctx:Context):
         '''Shuts down the bot'''
         await ctx.send("Shutting down...")
-        db.commit()
-        await self.bot.logout()
+        command=self.bot.get_command("jsk shutdown")
+        if command is None:
+            return await ctx.send("Jishaku is not loaded. Could not shutdown.")
+        await ctx.invoke(command)#type:ignore
 
-    @commands.command(name='sudo')
-    async def sudo(self, ctx: commands.Context, user: Union[discord.Member, discord.User], *, command: str):
+    @command(name='sudo')
+    async def sudo(self, ctx: Context, user: Union[discord.Member, discord.User], *, command: str):
         """Run a command as another user."""
         msg = copy.copy(ctx.message)
         msg.author = user
+        assert ctx.prefix is not None
         msg.content = ctx.prefix + command
         new_ctx = await self.bot.get_context(msg)
         try:
             await self.bot.invoke(new_ctx)
-        except discord.ext.commands.CommandInvokeError as e:
+        except CommandInvokeError as e:
             raise e.original
 
-    @commands.Cog.listener()
+    @Cog.listener()
     async def on_ready(self):
         print(f"{Meta.__qualname__} up")
-
-    @tasks.loop(seconds=5.0)
-    async def commit_db(self):
-        db.commit()
 async def setup(bot):
     await bot.add_cog(Meta(bot))

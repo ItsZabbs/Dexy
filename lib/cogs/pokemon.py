@@ -1,9 +1,7 @@
-import difflib
-import gc
 import random
 import re
 from copy import deepcopy
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import aiohttp
 import discord
@@ -11,8 +9,10 @@ import ujson as json
 from discord import app_commands
 from discord.ext import commands, tasks
 from discord.ext.commands import parameter
-from lib.bot import Bot
 
+from lib.bot import Bot
+from lib.cogs.utils.converters import PokemonConverter, SpriteConverter,get_close_matches
+from lib.cogs.utils.autocomplete import pokemon_autocomplete
 from ..db import db
 
 type_emoji_dict = {
@@ -36,7 +36,6 @@ type_emoji_dict = {
     "water": "<:water:985956512679735328>",
 }
 
-serebii = "https://www.serebii.net/pokemon/art/"
 back_dict = {
     "afd": "afd-back",
     "none": "ani-back",
@@ -70,8 +69,6 @@ normal_dict = {
     "gen5": "gen5",
     "gen4": "gen4",
 }
-
-
 type_dict = {
     1: ("Normal", (168, 168, 120)),
     2: ("Fighting", (192, 48, 40)),
@@ -117,9 +114,9 @@ colour_dict = {
     "shadow": (104, 160, 144),
 }
 BaseURL = "https://play.pokemonshowdown.com/sprites/"
-
+serebii = "https://www.serebii.net/pokemon/art/"
 # Alias cache implementation
-alias_cache: Dict[List, List] = {}
+alias_cache: Dict[int, Tuple[List[str],List[str]]] = {}
 pokemon_names: list = json.load(open("lib/cogs/pokedexdata/pokemon_names.json"))
 pokemon_names_ani: list = json.load(open("lib/cogs/pokedexdata/pokemon_names_ani.json"))
 location_dict = json.load(
@@ -148,7 +145,7 @@ target_dict = {
     12: "Entire Side",
     13: "User and Allies",
     14: "All Pokemon",
-    16: "Target and Self"
+    15: "Previous opponent",
 }
 abil_rating_dict = {
     -3: "Absolute Trash",
@@ -178,7 +175,7 @@ with open("lib/cogs/pokedexdata/nonexistentfile.json", encoding="utf-8") as pee:
     for k, v in moves_dict.items():
         ide = v["id"]
         moveid_dict[ide] = k
-    move_names = tuple(moves_dict.keys())
+    move_names :Tuple[str]= tuple(moves_dict.keys())
 evol_dict = json.load(
     open("lib/cogs/pokedexdata/pokemon_evolutions.json", encoding="utf-8")
 )
@@ -188,7 +185,7 @@ with open(
     abil_flav_dict: dict = json.load(abilflav)
 with open("lib/cogs/pokedexdata/ability_stuff.json", encoding="utf-8") as abilstuff:
     abil_stuff_dict: dict = json.load(abilstuff)
-    abil_names = tuple(v["name"] for v in abil_stuff_dict.values())
+    abil_names :Tuple[str]= tuple(v["name"] for v in abil_stuff_dict.values())
 with open(
     "lib/cogs/pokedexdata/item_names_and_flavour_combined_english.json",
     encoding="utf-8",
@@ -202,22 +199,24 @@ with open("lib/cogs/pokedexdata/movesets.json", encoding="utf-8") as move:
     movesets = json.load(move)
 
 SPRITE_REGEX = re.compile(
-    r"(^|\s)(\*|_)(?P<name>[a-zA-Z0-9-][a-zA-Z0-9 -]+)(\2| |\Z)",
+    r"(^|\s)(\*|_)(?P<name>[a-zA-Z0-9-][a-zA-Z0-9 -]*)(\2| |\Z)",
     flags=re.IGNORECASE,
 )
 messages = [
-    'Help in keeping the bot up! [Donate](https://buymeacoffee.com/Zabbs "buy me a coffee!!")',
-    'Donate for the server costs! [Donate](https://buymeacoffee.com/Zabbs "buy me a coffee!!")',
-    'Show your appreciation for the bot! [Donate here!](https://buymeacoffee.com/Zabbs "buy me a coffee!!")',
+    'help in keeping the bot up! [Donate](https://buymeacoffee.com/Zabbs "buy me a coffee!!")',
+    'donate for the server costs! [Donate](https://buymeacoffee.com/Zabbs "buy me a coffee!!")',
+    'show your appreciation for the bot! [Donate here!](https://buymeacoffee.com/Zabbs "buy me a coffee!!")',
 ]
 
 
-async def embed_this_please(ctx: commands.Context, embed: discord.Embed):
+async def add_info_to_embed(ctx: commands.Context[Bot], embed: discord.Embed):
     if random.randint(1, 30) == 1:
         embed.add_field(
             name="It also seems that you're enjoying the bot...",
-            value=f"Care to write a review on [top.gg](https://top.gg/bot/853556227610116116)?",
+            value=f"Care to write a review on [top.gg](https://top.gg/bot/853556227610116116)? Or "
+            +(random.choice(messages) if ctx.guild is not None and ctx.guild.id!=ctx.bot.rpokemon_guild_id else ""),
         )
+
     if ctx.interaction is None and ctx.guild is None:
         embed.set_footer(
             text=f"Did you know that you can also use the slash command and set private = True so nobody else can see it?"
@@ -261,7 +260,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
         )
         # name:str=name.replace("-"," ")
         # name=" ".join(n.capitalize() for n in name.split())
-        colour: list = pokemon_dict["color"]
+        colour: Sequence[int] = pokemon_dict["color"]
         if not isinstance(colour, list):
             colour = (88, 101, 242)
         # Title is the name
@@ -384,8 +383,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
         tier = pokemon_dict.get("Tier", None)
         if tier is None:
             tier = pokedex_dict.get(
-                pokemon_dict["baseSpecies"].lower().replace("-", "")
-            )["Tier"]
+                pokemon_dict["baseSpecies"].lower().replace("-", ""),{}).get("Tier","None")
         urllist = []
         try:
             name = pokemon_dict["baseSpecies"]
@@ -399,10 +397,14 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             urllist.append(
                 f"[Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/{name})"
             )
-            newname = (name.replace("_","-").replace(".","")).lower()
+            newname = (name.replace("_", "-").replace(".", "")).lower()
             urllist.append(f"[PokemonDB](https://pokemondb.net/pokedex/{newname})")
-            urllist.append(f"[Smogon](https://www.smogon.com/dex/ss/pokemon/{newname}/)")
-            urllist.append(f"[Serebii](https://www.serebii.net/pokemon/{name.replace('_','').lower()})")
+            urllist.append(
+                f"[Smogon](https://www.smogon.com/dex/ss/pokemon/{newname}/)"
+            )
+            urllist.append(
+                f"[Serebii](https://www.serebii.net/pokemon/{name.replace('_','').lower()})"
+            )
         embed.add_field(name="**Height**", value=f"{height}m", inline=False)
         embed.add_field(name="**Weight**", value=f"{weight}kg", inline=True)
         embed.add_field(name="**Smogon Tier**", value=tier, inline=True)
@@ -500,144 +502,14 @@ async def convert_four_baseurl(
     return url
 
 
-async def convert_string_sprite_to_structured(
-    x, ctx: commands.Context
-) -> Tuple[str, str, str, str]:
-    x = x.replace("-", " ")
-    lis = (
-        "rs",
-        "bw",
-        "yellow",
-        "gen3",
-        "gen1",
-        "rb",
-        "gen5",
-        "silver",
-        "pt",
-        "rg",
-        "frlg",
-        "dp",
-        "gold",
-        "bwani",
-        "gen2",
-        "gen5ani",
-        "crystal",
-        "gen4",
-        "afd",
-        "gen2g",
-        "gen2s",
-        "hgss",
-        "dp",
-        "pt",
-        "gen4",
-    )
-    x = x.lower()
-    try:
-        if ctx.guild.id in alias_cache:
-            existingaliases, existingsprites = alias_cache[ctx.guild.id]
-        else:
-            existingaliases: List = (
-                db.field("SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)
-            ).split(";")
-            existingsprites: List = (
-                db.field(
-                    "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id
-                )
-            ).split("|")
-            if len(alias_cache) > 120:
-                alias_cache.pop(tuple(alias_cache.keys())[0])
-            alias_cache[ctx.guild.id] = existingaliases, existingsprites
-        # return commands.when_mentioned_or(*prefix_cache[message.guild.id])(user, message)
-        # existingaliases = (db.field(
-        #     "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)).split(";")
-        # existingsprites = (db.field(
-        #     "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id)).split("|")
-        if x in existingaliases:
-            x = existingsprites[existingaliases.index(x)]
-    except:
-        pass
-        # raise NameError("Could not find that pokemon")
-    x = "  ".join(x.split())
-    back = False
-    if re.search("back", x):
-        x = re.sub("back", "", x)
-        back = True
-    shiny = False
-    if re.search("shiny", x):
-        x = re.sub("shiny", "", x)
-        shiny = True
-    x = " " + x + " "
-    result = re.findall(" | ".join(lis), x)
-    while "" in result:
-        result.remove("")
-    if not result:
-        result = ""
-    else:
-        result = result[0]
-    x = re.sub(result, "", x).strip()
-    x = re.sub("gigantamax", "gmax", x)
-    x = re.sub("mega y", "megay", x)
-    x = re.sub("mega x", "megax", x)
-    x = re.sub("female", "f", x)
-    x = re.sub("galarian", "galar", x)
-    x = re.sub("alolan", "alola", x)
-    x = re.sub("hisuian", "hisui", x)
-    x = x.split()
-    if x[0].startswith("tapu") and len(x) > 1:
-        x = x[0] + x[1]
-    elif len(x) > 1:
-        x = x[0] + "-" + "-".join(x[1:])
-    else:
-        x = x[0]
-    x = x.lower()
-    if x == "meganium":
-        pass
-    elif x.startswith(
-        (
-            "crowned",
-            "origin",
-            "dusk-mane",
-            "duskmane",
-            "dawnwings",
-            "dawn-wings",
-            "megax",
-            "megay",
-            "female",
-            "galar",
-            "alola",
-            "mega",
-            "gmax",
-            "eternamax",
-            "hisui",
-        )
-    ):
-        x = x.split("-")
-        x = x[-1] + "-" + ("".join((x[-2::-1])[::-1]))
-    result = result if result else "None"
-    resultsprite: str = result.strip().lower()
-    pokemon_name: str = x
-    back: str = back
-    shiny: str = shiny
-    return (
-        back,
-        shiny,
-        resultsprite,
-        pokemon_name,
-    )
 
 
 class Pokemon(commands.Cog):
     """All of the Pokemon related commands"""
 
     url = "pokemon-related-commands"
-
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.bot.alias_cache = alias_cache
-        self.cleanup_gc.start()
-
-    def cog_unload(self):
-        self.cleanup_gc.stop()
 
     @commands.group(extras={"url": "alias-management"})
     async def alias(self, ctx: commands.Context):
@@ -654,69 +526,21 @@ class Pokemon(commands.Cog):
         ctx: commands.Context,
         alias: str = parameter(description="The text that will call the sprite."),
         *,
-        sprite: str = parameter(
+        sprite: SpriteConverter = parameter(
             description="The sprite that will be called via the alias."
         ),
     ):
         """Adds an alias to a sprite for easy access and memes"""
-        sprite = sprite.lower()
+        assert ctx.guild is not None and self.bot.alias_cache is not None#Command can only be used in guilds due to the permission check
         alias = alias.lower()
-        back, shiny, sprite_type, pokemon = await convert_string_sprite_to_structured(
-            sprite, ctx
-        )
-        if ";" in alias:
-            return await ctx.send("Alias cannot contain a semicolon!")
+        back, shiny, sprite_type, pokemon = sprite
         url = await convert_four_baseurl(back, shiny, pokemon, sprite_type.lower(), ctx)
         async with aiohttp.ClientSession() as cs:
             async with cs.get(url=BaseURL + url) as r:
                 if r.status != 200:
-                    name = difflib.get_close_matches(pokemon, pokedex_dict.keys(), n=1)
-                    if not name:
-                        raise KeyError(
-                            "Looks like the pokemon you requested doesn't exist..."
-                        )
-                    name = name[0]
-                    pokemon_dict = pokedex_dict[name]
-                    if name == pokemon_dict["name"].lower():
-                        raise KeyError("The sprite is not available in that format...")
-                    *_, name = await convert_string_sprite_to_structured(name, ctx)
-                    raise KeyError(f"Were you looking for {name}?")
-        if ctx.guild.id in self.bot.alias_cache:
-            existingaliases, existingsprites = self.bot.alias_cache[ctx.guild.id]
-        else:
-            try:
-                existingaliases = (
-                    db.field(
-                        "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id
-                    )
-                ).split(";")
-                existingsprites = (
-                    db.field(
-                        "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id
-                    )
-                ).split("|")
-            except:
-                existingaliases = []
-                existingsprites = []
-            if len(self.bot.alias_cache) > 120:
-                self.bot.alias_cache.pop(tuple(self.bot.alias_cache.keys())[0])
-            self.bot.alias_cache[ctx.guild.id] = existingaliases, existingsprites
-        if alias in existingaliases:
-            return await ctx.send("That's an existing alias!")
-        existingsprites.append(sprite)
-        existingaliases.append(alias)
-        self.bot.alias_cache.update({ctx.guild.id: (existingaliases, existingsprites)})
-        existingaliases = ";".join(existingaliases)
-        existingsprites = "|".join(existingsprites)
-        db.execute(
-            f"UPDATE guilds SET Aliases=? WHERE GuildID = {ctx.guild.id}",
-            existingaliases,
-        )
-        db.execute(
-            f"UPDATE guilds SET AliSprites=? WHERE GuildID = {ctx.guild.id}",
-            existingsprites,
-        )
-        await ctx.message.add_reaction("✅")
+                    raise KeyError("The sprite is not available in that format...")
+        await db.insert_new_alias(ctx.guild.id,alias,f"{pokemon} {sprite_type if sprite_type!='none' else ''} {'back' if back else ''} {'shiny' if shiny else ''}".strip())
+        await ctx.message.add_reaction("✅")    
 
     @alias.command(
         name="remove",
@@ -727,51 +551,7 @@ class Pokemon(commands.Cog):
         self, ctx, alias: str = parameter(description="The alias to remove.")
     ):
         """Removes an existing alias"""
-        if ctx.guild.id in self.bot.alias_cache:
-            existingaliases, existingsprites = self.bot.alias_cache[ctx.guild.id]
-        else:
-            try:
-                existingaliases = (
-                    db.field(
-                        "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id
-                    )
-                ).split(";")
-                existingsprites = (
-                    db.field(
-                        "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id
-                    )
-                ).split("|")
-            except:
-                return await ctx.send(
-                    "You do not have any aliases set for this server!"
-                )
-            if len(self.bot.alias_cache) > 120:
-                self.bot.alias_cache.pop(tuple(self.bot.alias_cache.keys())[0])
-            self.bot.alias_cache[ctx.guild.id] = existingaliases, existingsprites
-        # try:
-        #     existingaliases = (db.field(
-        #         "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)).split(";")
-        #     existingsprites = (db.field(
-        #         "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id)).split("|")
-        # except:
-        #     return await ctx.send("You do not have any aliases set for this server!")
-        try:
-            index = existingaliases.index(alias)
-            existingaliases.pop(index)
-            existingsprites.pop(index)
-        except:
-            return await ctx.send("There's no alias like that!")
-        self.bot.alias_cache.update({ctx.guild.id: (existingaliases, existingsprites)})
-        existingaliases = ";".join(existingaliases)
-        existingsprites = "|".join(existingsprites)
-        db.execute(
-            f"UPDATE guilds SET Aliases=? WHERE GuildID = {ctx.guild.id}",
-            existingaliases,
-        )
-        db.execute(
-            f"UPDATE guilds SET AliSprites=? WHERE GuildID = {ctx.guild.id}",
-            existingsprites,
-        )
+        await db.remove_alias(ctx.guild.id,alias)
         await ctx.message.add_reaction("✅")
 
     @alias.command(
@@ -779,46 +559,17 @@ class Pokemon(commands.Cog):
     )
     async def list_aliases(self, ctx):
         """Lists all the server aliases for a pokemon"""
-        if ctx.guild.id in self.bot.alias_cache:
-            existingaliases, existingsprites = self.bot.alias_cache[ctx.guild.id]
-        else:
-            try:
-                existingaliases = (
-                    db.field(
-                        "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id
-                    )
-                ).split(";")
-                existingsprites = (
-                    db.field(
-                        "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id
-                    )
-                ).split("|")
-            except:
-                return await ctx.send(
-                    "You do not have any aliases set for this server!"
-                )
-            if len(self.bot.alias_cache) > 120:
-                self.bot.alias_cache.pop(tuple(self.bot.alias_cache.keys())[0])
-            self.bot.alias_cache[ctx.guild.id] = existingaliases, existingsprites
-        # try:
-        #     existingaliases = (db.field(
-        #         "SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)).split(";")
-        #     existingsprites = (db.field(
-        #         "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id)).split("|")
-        # except:
-        #     return await ctx.send("You do not have any aliases set for this server!")
-        aliases = []
-        for n, (e, v) in enumerate(zip(existingaliases, existingsprites), start=1):
+        aliases=await db.alias_cache[ctx.guild.id]
+        assert isinstance(aliases,tuple)
+        all_aliases=[]
+        for n, (e, v) in enumerate(zip(*aliases),start=1):
             if e or v:
-                aliases.append(f"{n} : `{e}` ➔ `{v}`")
-        if not aliases:
+                all_aliases.append(f"{n} : `{e}` ➔ `{v}`")
+        if not all_aliases:
             return await ctx.send("You do not have any aliases set for this server!")
-        # aliases = [ for n, (e, v) in enumerate(
-        #     zip(existingaliases, existingsprites) if (e or v), start=1)]
-
         embed = discord.Embed(
             title=f"Aliases for this server ({ctx.guild.name})",
-            description="\n".join(aliases),
+            description="\n".join(all_aliases),
             colour=discord.Color.blurple(),
         )
 
@@ -847,30 +598,22 @@ class Pokemon(commands.Cog):
         try:
             abil_dict = abil_stuff_dict[ability]
         except KeyError:
-            try:
-                name = difflib.get_close_matches(ability, abil_stuff_dict.keys(), n=1)
-                if not len(name):
-                    raise NameError("Could not find that Ability.")
-                name = name[0]
-                if not name:
-                    return await ctx.send(
-                        "Looks like the ability you requested doesn't exist..."
-                    )
-                abil_dict = abil_stuff_dict[name]
-            except KeyError:
+            name = get_close_matches(ability, abil_stuff_dict.keys())
+            if name is None:
                 return await ctx.send(
-                    "You've sent an incorrect spelling or a wrong ability name"
+                    "Looks like the ability you requested doesn't exist..."
                 )
+            abil_dict = abil_stuff_dict[name]
         name = abil_dict["name"]
         urldict = []
-        realname = name.replace(" ", "_")
+        underscorename = name.replace(" ", "_")
         urldict.append(
-            f"[Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/{realname}_(Ability%29)"
+            f"[Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/{underscorename}_(Ability%29)"
         )
-        underscorename = name.replace(" ", "-")
-        urldict.append(f"[PokemonDB](https://pokemondb.net/ability/{underscorename})")
+        hyphenname = name.replace(" ", "-")
+        urldict.append(f"[PokemonDB](https://pokemondb.net/ability/{hyphenname})")
         urldict.append(
-            f"[Smogon](https://www.smogon.com/dex/ss/abilities/{underscorename}/)"
+            f"[Smogon](https://www.smogon.com/dex/ss/abilities/{hyphenname}/)"
         )
         nospacesname = (name.replace(" ", "")).lower()
         urldict.append(
@@ -894,7 +637,8 @@ class Pokemon(commands.Cog):
         embed.add_field(
             name="External Resources", value=f'{" • ".join(urldict)}', inline=False
         )
-        embed = await embed_this_please(ctx, embed)
+        embed = await add_info_to_embed(ctx, embed)
+        if private is None:private=False
         await ctx.send(embed=embed, ephemeral=private)
 
     @ability.autocomplete("ability")
@@ -935,27 +679,23 @@ class Pokemon(commands.Cog):
                 return await ctx.send("You can't send more than two types.")
         except KeyError:
             try:
-                name = difflib.get_close_matches(
-                    pokemon_or_move_or_typestring, pokedex_dict.keys(), n=1, cutoff=0.9
-                )
+                name=get_close_matches(pokemon_or_move_or_typestring,pokemon_names)
+                if name is None:raise KeyError()
                 pokemon_or_move_or_typestring = " ".join(
-                    pokedex_dict[name[0]]["types"]
+                    pokedex_dict[name]["types"]
                 ).lower()
-                image_link = pokedex_dict[name[0]].get("url", "")
+                image_link = pokedex_dict[name].get("url", "")
                 if image_link:
                     image_link = f"https://www.serebii.net/pokemon/art/{image_link}.png"
-            except:
-                try:
-                    name = difflib.get_close_matches(
-                        pokemon_or_move_or_typestring, moves_dict.keys(), n=1
-                    )
-                    pokemon_or_move_or_typestring = type_dict[
-                        moves_dict[name[0]]["type_id"]
-                    ][0].lower()
-                except:
-                    return await ctx.send(
-                        "I couldn't match your input to a type or pokemon or move"
-                    )
+            except KeyError:
+                name=get_close_matches(pokemon_or_move_or_typestring,moves_dict.keys())
+                if name is None:return await ctx.send(
+                    "I couldn't match your input to a type or pokemon or move"
+                )
+                pokemon_or_move_or_typestring = type_dict[
+                    moves_dict[name]["type_id"]
+                ][0].lower()
+                    
 
         for two in pokemon_or_move_or_typestring.split():
             typetobeseen = types[two]["damageTaken"]
@@ -968,16 +708,18 @@ class Pokemon(commands.Cog):
                     resistantFrom.append(v)
                 else:
                     immuneFrom.append(v)
+            two=two.capitalize()
             for k, v in types.items():
+                k=k.capitalize()
                 v = v["damageTaken"]
-                if v[two.capitalize()] == 1:
-                    supereffectiveTo.append(k.capitalize())
-                elif v[two.capitalize()] == 0:
-                    effectiveTo.append(k.capitalize())
-                elif v[two.capitalize()] == 2:
-                    resistantTo.append(k.capitalize())
+                if v[two] == 1:
+                    supereffectiveTo.append(k)
+                elif v[two] == 0:
+                    effectiveTo.append(k)
+                elif v[two] == 2:
+                    resistantTo.append(k)
                 else:
-                    immuneTo.append(k.capitalize())
+                    immuneTo.append(k)
         if len(pokemon_or_move_or_typestring.split()) > 1:
             for e in immuneFrom:
                 if e in supereffectiveFrom:
@@ -996,24 +738,7 @@ class Pokemon(commands.Cog):
                     effectiveFrom.append(e)
                     supereffectiveFrom.remove(e)
                     resistantFrom.remove(e)
-            ## OFFENSE
-            for e in immuneTo:
-                if e in supereffectiveTo:
-                    supereffectiveTo.remove(e)
-            neweffectiveTo = effectiveTo.copy()
-            for e in neweffectiveTo:
-                if e in supereffectiveTo:
-                    effectiveTo.remove(e)
-                elif e in immuneTo:
-                    effectiveTo.remove(e)
-                elif e in resistantTo:
-                    effectiveTo.remove(e)
             newresistantfrom = resistantTo.copy()
-            for e in newresistantfrom:
-                if e in supereffectiveTo:
-                    effectiveTo.append(e)
-                    supereffectiveTo.remove(e)
-                    resistantTo.remove(e)
 
         if len(pokemon_or_move_or_typestring.split()) > 1:
             if len(set(supereffectiveFrom)) != len(supereffectiveFrom):
@@ -1024,59 +749,14 @@ class Pokemon(commands.Cog):
                     supereffectiveFrom.remove(e)
                     ind = supereffectiveFrom.index(e)
                     supereffectiveFrom[ind] = f"**__{supereffectiveFrom[ind]}__**"
-            if len(set(resistantTo)) != len(resistantTo):
-                repeatedTypes = [x for x in resistantTo if resistantTo.count(x) > 1]
-                for e in set(repeatedTypes):
-                    resistantTo.remove(e)
-                    ind = resistantTo.index(e)
-                    resistantTo[ind] = "**__" + resistantTo[ind] + "__**"
-            if len(set(supereffectiveTo)) != len(supereffectiveTo):
-                repeatedTypes = [
-                    x for x in supereffectiveTo if supereffectiveTo.count(x) > 1
-                ]
-                for e in set(repeatedTypes):
-                    supereffectiveTo.remove(e)
-                    ind = supereffectiveTo.index(e)
-                    supereffectiveTo[ind] = "**__" + supereffectiveTo[ind] + "**__"
             if len(set(resistantFrom)) != len(resistantFrom):
                 repeatedTypes = [x for x in resistantFrom if resistantFrom.count(x) > 1]
                 for e in set(repeatedTypes):
                     resistantFrom.remove(e)
                     ind = resistantFrom.index(e)
                     resistantFrom[ind] = "__**" + resistantFrom[ind] + "**__"
-        for ind, e in enumerate(resistantFrom, start=0):
-            if not e.endswith("(x0.25)"):
-                resistantFrom[ind] = e  # +" (x0.5)"
-        for ind, e in enumerate(supereffectiveTo, start=0):
-            if not e.endswith("(x4)"):
-                supereffectiveTo[ind] = e  # +" (x2)"
-        for ind, e in enumerate(resistantTo, start=0):
-            if not e.endswith("(x0.25)"):
-                resistantTo[ind] = e  # +" (x0.5)"
-        for ind, e in enumerate(supereffectiveFrom, start=0):
-            if not e.endswith("(x4)"):
-                supereffectiveFrom[ind] = e  # +" (x2)"
-        # embed.add_field(name='Defense\n\nWeak to',
-        #                 value=", ".join(list(set(supereffectiveFrom))))
-        # embed.add_field(name='Takes normal damage from',
-        #                 value=", ".join(list(set(effectiveFrom))), inline=False)
-        # embed.add_field(name='Takes half damage from',
-        #                 value=", ".join(list(set(resistantFrom))), inline=False)
-        # if immuneFrom:
-        #     embed.add_field(name='Does not damage:',
-        #                     value=", ".join(list(set(immuneFrom))), inline=False)
-        # if len(typestring.split())==1:
-        #     embed.add_field(name='\nAttack \n\nDoes Super Effective Damage to',
-        #                     value=", ".join(list(set(supereffectiveTo))), inline=False)
-        #     embed.add_field(name='Deals normal damage to',
-        #                     value=", ".join(list(set(effectiveTo))), inline=False)
-        #     embed.add_field(name='Deals half damage to',
-        #                     value=", ".join(list(set(resistantTo))), inline=False)
-        #     if immuneTo:
-        #         embed.add_field(name='Does not take any damage from:',value=", ".join(list(set(immuneTo)).sort()), inline=False)
-        # await ctx.send(embed=embed)
         if name:
-            name = name[0].replace("-", " ")
+            name = name.replace("-", " ")
             # name=[name] if type(name)==str else name
             name = name.split()
             name = " " + " ".join(n.capitalize() for n in name)
@@ -1087,7 +767,7 @@ class Pokemon(commands.Cog):
         )
         embed = discord.Embed(
             title=emojis + name,
-            colour=discord.Color.from_rgb(*colour_dict[two]),
+            colour=discord.Color.from_rgb(*colour_dict[two.lower()]),#type:ignore
             description=", ".join(
                 [e.capitalize() for e in pokemon_or_move_or_typestring.split()]
             ),
@@ -1146,7 +826,7 @@ class Pokemon(commands.Cog):
                     value=", ".join(dict.fromkeys(immuneTo)) if immuneTo else "None",
                     inline=False,
                 )
-        embed = await embed_this_please(ctx, embed)
+        embed = await add_info_to_embed(ctx, embed)
         if image_link:
             embed.set_thumbnail(url=image_link)
         embed.set_footer(text="Bolded underline indicates double weakness/resistance")
@@ -1170,29 +850,25 @@ class Pokemon(commands.Cog):
         """Sends info about the item"""
         itemname = itemname.lower()
         itemname = itemname.replace(" ", "")
-        try:
-            flavour_text_item = item_stuff_dict[itemname]
-        except KeyError:
-            try:
-                itemname = difflib.get_close_matches(
-                    itemname, item_stuff_dict.keys(), n=1
-                )[0]
-                item_dict = item_stuff_dict[itemname]
-            except:
-                return await ctx.send(
-                    "You've sent an incorrect spelling or a wrong item name"
-                )
+        close_itemname = get_close_matches(itemname, item_names)
+        if close_itemname is None:
+            return await ctx.send(
+            "You've sent an incorrect spelling or a wrong item name"
+        )
+        item_dict = item_stuff_dict[close_itemname]
         flavour_text_item = item_dict["FlavourText"]
         sprite = item_dict["sprite"]
         embed = discord.Embed(
-            title=f"{itemname}",
+            title=f"{close_itemname}",
             description=f"{flavour_text_item[-1]}",
             colour=discord.Color.blurple(),
         )
         if sprite:
             embed.set_thumbnail(url=sprite)
+        itemname=itemname.replace("é","e")
         underscorename = itemname.replace(" ", "_")
         hyphenlink = itemname.replace(" ", "-")
+
         urllist = []
         urllist.append(
             f"[Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/{underscorename})"
@@ -1209,7 +885,7 @@ class Pokemon(commands.Cog):
         embed.add_field(
             name="External Resources", value=f"{' • '.join(urllist)}", inline=False
         )
-        embed = await embed_this_please(ctx, embed)
+        embed = await add_info_to_embed(ctx, embed)
         await ctx.send(embed=embed, ephemeral=private)
 
     @iteminfo.autocomplete("itemname")
@@ -1225,7 +901,7 @@ class Pokemon(commands.Cog):
         self,
         ctx: commands.Context,
         *,
-        sprite_name: str = parameter(
+        sprite_name: SpriteConverter = parameter(
             description="The Pokemon you want to see the sprite of. Find a more detailed guide in the wiki."
         ),
     ):
@@ -1233,70 +909,14 @@ class Pokemon(commands.Cog):
         pokemon : Pokemon name
         sprite_type : Check the wiki for a detailed guide
         Note: gmax and mega can be done by <pokemon>-gmax and <pokemon>-mega\n"""
-        sprite_name = sprite_name.lower()
-        back, shiny, sprite_type, pokemon = await convert_string_sprite_to_structured(
-            sprite_name, ctx
-        )
-        sprite_type = sprite_type.lower().strip()
-        pokemon = pokemon.replace(" ", "").lower().strip()
+        back, shiny, sprite_type, pokemon = sprite_name  # type:ignore
         if pokemon.lower() == "dab":
             embed = discord.Embed()
             embed.set_image(
                 url="https://cdn.discordapp.com/attachments/777782956357320714/868583991031234590/kadabra.png"
             )
             return await ctx.send(embed=embed)
-        try:
-            if (pokemon == "random" or pokemon == "prandom") and sprite_type == "none":
-                pokemon = random.choice(pokemon_names_ani)
-            if pokemon == "random" or pokemon == "prandom":
-                pokemon = random.choice(pokemon_names)
-            elif "-" not in pokemon:
-                if pokemon not in pokemon_names:
-                    raise KeyError
-            else:
-                pass
-        except KeyError:
-            name = difflib.get_close_matches(pokemon, pokemon_names, n=1, cutoff=0.8)
-            if not len(name):
-                raise NameError("Could not find that Pokemon")
-            name = name[0]
-            if not name:
-                raise KeyError("Looks like the pokemon you requested doesn't exist...")
-            raise KeyError(f"Were you looking for {name}?")
-        if pokemon not in pokemon_names and not (
-            pokemon in pokemon_names_ani and sprite_type == "none"
-        ):
-            name = difflib.get_close_matches(pokemon, pokemon_names, n=1, cutoff=0.3)
-            if not name:
-                raise KeyError("Could not find that Pokemon")
-            raise KeyError(f"Could not find that Pokemon, try `{name[0]}` instead")
-        if (
-            pokemon in pokemon_names
-            and pokemon not in pokemon_names_ani
-            and sprite_type == "none"
-        ):
-            raise KeyError("Seems like the Pokemon only has a `bw` sprite.")
         url = await convert_four_baseurl(back, shiny, pokemon, sprite_type, ctx)
-        # payload = "{}"
-        # async with aiohttp.ClientSession() as cs:
-        #     async with cs.get(url=BaseURL + url) as r:
-        #         if r.status != 200:
-        #             try:
-        #                 pokemon_dict = pokedex_dict[name]
-        #             except:
-        #                 raise NameError(f"It seems that I couldn't find the sprite for {sprite_type} for {pokemon}. It seems that the sprite doesn't exist for the requested format.")
-        #             name= difflib.get_close_matches(pokemon, pokedex_dict.keys())
-        #             if not len(name):
-        #                 raise NameError("Could not find that Pokemon.")
-        #             name=name[0]
-        #             if not name:
-        #                 raise KeyError("Looks like the pokemon you requested doesn't exist...")
-        #             # if name == pokemon_dict["name"].lower():
-        #             #     raise KeyError("The sprite is not available in that format...")
-        #             *_,name=await convert_string_sprite_to_structured(name,ctx)
-        #             raise KeyError(
-        #                 f"Were you looking for {name}?")
-
         embed = discord.Embed()
         embed.set_image(url=BaseURL + url)
         # embed=await embed_this_please(ctx,embed)
@@ -1319,59 +939,26 @@ class Pokemon(commands.Cog):
         self,
         ctx: commands.Context,
         *,
-        pokemon: str = parameter(
+        pokemon: PokemonConverter = parameter(
             description="The Pokemon you want to see the info on."
         ),
         private: Optional[bool] = parameter(
             description="If only you want to see the info.", default=False
         ),
-        lite: Optional[bool] = False,
+        lite: bool = False,
     ):
         """Sends dex information about the pokemon"""
-        try:
-            existingaliases = (
-                db.field("SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)
-            ).split(";")
-            existingsprites = (
-                db.field(
-                    "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id
-                )
-            ).split("|")
-            if pokemon in existingaliases:
-                index = existingaliases.index(pokemon)
-                pokemon = existingsprites[index]
-        except AttributeError:
-            pass
-        pokemon = pokemon.lower()
-        pokemon = pokemon.replace(" ", "")
-        if pokemon == "random":
-            pokemon = random.choice(pokemon_names)
-        *_, pokemon = await convert_string_sprite_to_structured(pokemon, ctx)
-        try:
-            pokemon_dict = pokedex_dict[pokemon]
-        except KeyError:
-            try:
-                name = difflib.get_close_matches(pokemon, pokedex_dict.keys(), n=1)[0]
-                if not name:
-                    return await ctx.send(
-                        "Looks like the pokemon you requested doesn't exist..."
-                    )
-                pokemon_dict = pokedex_dict[name]
-            except:
-                return await ctx.send(
-                    "You've sent an incorrect spelling or a wrong pokemon name"
-                )
+
+        pokemon_dict = pokedex_dict[pokemon]
         embed = await get_pokedex_stuff(pokemon_dict, lite)
-        embed = await embed_this_please(ctx, embed)
+        embed = await add_info_to_embed(ctx, embed)
+        if private is None:private=False
         await ctx.send(embed=embed, ephemeral=private)
 
     @pokedex.autocomplete("pokemon")
+    @pokemon_autocomplete
     async def auto_dex(self, interaction, current: str):
-        return [
-            app_commands.Choice(name=pokemon, value=pokemon)
-            for pokemon in pokemon_names_disp
-            if current.lower() in pokemon.lower()
-        ][:25]
+        ...
 
     @commands.hybrid_command(
         name="ldex", aliases=["litedex", "cheapdex"], extras={"url": "lite-pokedex"}
@@ -1384,7 +971,7 @@ class Pokemon(commands.Cog):
         self,
         ctx,
         *,
-        pokemon: str = parameter(
+        pokemon: PokemonConverter = parameter(
             description="The Pokemon you want to see the info on."
         ),
         private: Optional[bool] = parameter(
@@ -1392,54 +979,15 @@ class Pokemon(commands.Cog):
         ),
     ):
         """Sends light weight information about the pokemon"""
-        try:
-            existingaliases = (
-                db.field("SELECT Aliases from guilds WHERE GuildID = ?", ctx.guild.id)
-            ).split(";")
-            existingsprites = (
-                db.field(
-                    "SELECT AliSprites from guilds WHERE GuildID = ?", ctx.guild.id
-                )
-            ).split("|")
-            if pokemon in existingaliases:
-                index = existingaliases.index(pokemon)
-                pokemon = existingsprites[index]
-            else:
-                pass
-        except AttributeError:
-            pass
-        *_, pokemon = await convert_string_sprite_to_structured(pokemon, ctx)
-        pokemon = pokemon.lower()
-        pokemon = pokemon.replace(" ", "")
-        if pokemon == "random":
-            pokemon = random.choice(pokemon_names)
-        try:
-            pokemon_dict = pokedex_dict[pokemon]
-        except KeyError:
-            try:
-                name = difflib.get_close_matches(pokemon, pokedex_dict.keys(), n=1)
-                if not len(name):
-                    return await ctx.send(
-                        "Looks like the pokemon you requested doesn't exist..."
-                    )
-                name = name[0]
-                pokemon_dict = pokedex_dict[name]
-
-            except:
-                return await ctx.send(
-                    "You've sent an incorrect spelling or a wrong pokemon name"
-                )
+        pokemon_dict = pokedex_dict[pokemon]
         embed = await get_pokedex_stuff(pokemon_dict, True)
-        embed = await embed_this_please(ctx, embed)
+        embed = await add_info_to_embed(ctx, embed)
         await ctx.send(embed=embed, ephemeral=private)
 
     @lite_dex.autocomplete("pokemon")
+    @pokemon_autocomplete
     async def auto_ldex(self, interaction, current: str):
-        return [
-            app_commands.Choice(name=pokemon, value=pokemon)
-            for pokemon in pokemon_names_disp
-            if current.lower() in pokemon.lower()
-        ][:25]
+        ...
 
     @commands.hybrid_command(
         name="artwork", aliases=["art"], extras={"url": "artworks"}
@@ -1452,7 +1000,7 @@ class Pokemon(commands.Cog):
         self,
         ctx,
         *,
-        pokemon: str = parameter(
+        pokemon: PokemonConverter = parameter(
             description="The Pokemon you want to see the artwork of."
         ),
         private: Optional[bool] = parameter(
@@ -1461,44 +1009,19 @@ class Pokemon(commands.Cog):
         ),
     ):
         """Sends the official artwork of the mentioned pokemon"""
-        # return await ctx.send("There have been some inconsistencies with the artwork URLs recently. The bot developer is working hard to resolve these. Try and support him through https://buymeacoffee.com/Zabbs \n Sorry for the inconvenience.")
-        pokemon = pokemon.lower()
-        pokemon = pokemon.replace(" ", "")
-        if pokemon == "random":
-            pokemon = random.choice(pokemon_names)
-        try:
-            url = pokedex_dict[pokemon]["url"]
-        except KeyError:
-            try:
-                name = difflib.get_close_matches(pokemon, pokedex_dict.keys(), n=1)
-                if not name:
-                    return await ctx.send(
-                        "Looks like the pokemon you requested doesn't exist..."
-                    )
-                url = pokedex_dict[name[0]]
-                try:
-                    url = url["url"]
-                except:
-                    return await ctx.send(
-                        "I couldn't find the artwork for that pokemon"
-                    )
-            except:
-                return await ctx.send(
-                    "You've sent an incorrect spelling or a wrong pokemon name"
-                )
+        url = pokedex_dict[pokemon].get("url", None)
+        if url is None:
+            raise TypeError("I couldn't find the artwork for that Pokemon")
         embed = discord.Embed()
         embed.set_image(url=serebii + url + ".png")
         # embed.set_footer(text="Please report any wrong artworks using the `feedback` command!")
-        embed = await embed_this_please(ctx, embed)
+        embed = await add_info_to_embed(ctx, embed)
         await ctx.send(embed=embed, ephemeral=private)
 
     @artwork.autocomplete("pokemon")
+    @pokemon_autocomplete
     async def auto_artwork(self, interaction, current: str):
-        return [
-            app_commands.Choice(name=pokemon, value=pokemon)
-            for pokemon in pokemon_names_disp
-            if current.lower() in pokemon.lower()
-        ][:25]
+        ...
 
     @commands.hybrid_command(name="move", extras={"url": "moves"})
     @app_commands.describe(
@@ -1522,17 +1045,13 @@ class Pokemon(commands.Cog):
             move_dict = moves_dict[move]
             name = move
         except KeyError:
-            try:
-                name = difflib.get_close_matches(move, moves_dict.keys())[0]
-                if not name:
-                    return await ctx.send(
-                        "Looks like the move you requested doesn't exist..."
-                    )
-                move_dict = moves_dict[name]
-            except:
+            name = get_close_matches(move, moves_dict.keys())
+            if name is None:
                 return await ctx.send(
-                    "You've sent an incorrect spelling or a wrong move name"
+                    "Looks like the move you requested doesn't exist..."
                 )
+            move_dict = moves_dict[name]
+            
         urllist = []
         newname = []
         name = name.split("-")
@@ -1549,7 +1068,7 @@ class Pokemon(commands.Cog):
         hyphenname = (name.replace(" ", "-")).lower()
         urllist.append(f"[PokemonDB](https://pokemondb.net/move/{hyphenname})")
         urllist.append(f"[Smogon](https://www.smogon.com/dex/ss/moves/{hyphenname}/)")
-        flavourmmm=move_dict.get("flavourText",["Could not find flavour text."])[-1]
+        flavourmmm = move_dict.get("flavourText", ["Could not find flavour text."])[-1]
         nospacename = (name.replace(" ", "")).lower()
         if (
             flavourmmm
@@ -1572,7 +1091,7 @@ class Pokemon(commands.Cog):
         embed.add_field(
             name="External Resources", value=" • ".join(urllist), inline=False
         )
-        embed = await embed_this_please(ctx, embed)
+        embed = await add_info_to_embed(ctx, embed)
         await ctx.send(embed=embed, ephemeral=private)
 
     @moveinfo.autocomplete("move")
@@ -1582,135 +1101,6 @@ class Pokemon(commands.Cog):
             for move in move_names
             if current.lower() in move.lower()
         ][:25]
-
-    # @commands.hybrid_command(name="moveset", extras={"url": "movesets"})
-    # @app_commands.describe(
-    #     pokemon="The Pokemon you want to get the moveset of",
-    #     game_name="The game you want to get the moveset of",
-    #     learn_type="The learning method of the moves",
-    #     private="If only you want to see the moveset",
-    # )
-    # async def moveset(
-    #     self,
-    #     ctx,
-    #     pokemon: str = parameter(
-    #         description="The Pokemon you want to see the moveset of."
-    #     ),
-    #     game_name: str = parameter(
-    #         description="The name of the game. Eg. Omega Ruby or use initials like ORAS"
-    #     ),
-    #     learn_type: str = parameter(
-    #         description="The learning method you want to see the moveset of.",
-    #         default="level-up",
-    #     ),
-    #     private: Optional[bool] = parameter(
-    #         description="If only you want to see the moveset. Slash commands only.",
-    #         default=False,
-    #     ),
-    # ):
-    #     """Sends the pokemon's moveset in the requested game. See [prefix]help moveset for more info"""
-    #     pokemon = pokemon.lower()
-    #     pokemon = pokemon.replace(" ", "")
-    #     try:
-    #         colour = pokedex_dict[pokemon]["color"]
-    #         name = pokedex_dict["pokemon"]["name"]
-    #         number = pokedex_dict[pokemon]["num"]
-    #     except KeyError:
-    #         try:
-    #             name = difflib.get_close_matches(pokemon, pokedex_dict.keys(), n=1)[0]
-    #             if not len(name):
-    #                 return await ctx.send(
-    #                     "Looks like the pokemon you requested doesn't exist..."
-    #                 )
-    #             number = pokedex_dict[name]["num"]
-    #             colour = pokedex_dict[name]["color"]
-    #         except:
-    #             return await ctx.send(
-    #                 "You've sent an incorrect spelling or a wrong pokemon name"
-    #             )
-    #     game_name = game_name.lower()
-    #     version_num = initial_dict.get(game_name, None)
-    #     if version_num is None:
-    #         version_num = difflib.get_close_matches(
-    #             game_name, version_dict.keys(), n=1, cutoff=0.3
-    #         )
-    #         if not len(version_num):
-    #             raise KeyError("I couldn't find the game you're looking for...")
-    #         game_name = version_num[0].split("-")
-    #         version_num = version_dict[version_num[0]]
-    #     else:
-    #         keys = tuple(version_dict.keys())
-    #         values = tuple(version_dict.values()).index(version_num)
-    #         game_name = keys[values].split("-")
-    #     learn_type_redefined = difflib.get_close_matches(
-    #         learn_type, learn_list.keys(), n=1, cutoff=0.1
-    #     )
-    #     if not len(learn_type_redefined):
-    #         raise KeyError(
-    #             "I couldn't find the move learning method you're looking for..."
-    #         )
-    #     movemethod = learn_type_redefined[0]
-    #     learn_type_redefined = str(learn_list[learn_type_redefined[0]]["id"])
-    #     try:
-    #         e = deepcopy(movesets[str(number)][version_num][learn_type_redefined])
-    #     except:
-    #         return await ctx.send(
-    #             "The Pokemon you sent probably does not exist in that game or it does learn any moves through that method."
-    #         )
-    #     bylevel = {}
-    #     if e[0].get("level", "jfioewjfo") == "jfioewjfo":
-    #         e = deepcopy(
-    #             movesets[str(number)][str(int(version_num) - 1)][learn_type_redefined]
-    #         )
-    #     for d in e:
-    #         l = d.get("level", 1)
-    #         ls = bylevel.get(l, [])
-    #         if d.get("level", "jfioewjfo") != "jfioewjfo":
-    #             d.pop("level")
-    #         ls.append(d)
-    #         bylevel.update({l: ls})
-    #     colour = discord.Color.from_rgb(*colour)
-    #     embed = discord.Embed(
-    #         title=name.capitalize(),
-    #         description=f'Move method - {" ".join([e.capitalize() for e in movemethod.split("-")])} \nGame - {", ".join(e.capitalize() if len(e.split())==0 else " ".join([i.capitalize() for i in e.split(" ")]) for e in game_name)}',
-    #         colour=colour,
-    #     )
-    #     for k, v in bylevel.items():
-    #         n = []
-    #         for i in v:
-    #             n.append(
-    #                 " ".join(
-    #                     [e.capitalize() for e in moveid_dict[i["move_id"]].split("-")]
-    #                 )
-    #             )
-    #             name = f"Level {k}" if k != 0 else "Level not applicable"
-    #         embed.add_field(name=name, value=", ".join(n), inline=False)
-    #     embed = await embed_this_please(ctx, embed)
-    #     return await ctx.send(embed=embed, ephemeral=private)
-
-    # @moveset.autocomplete("pokemon")
-    # async def moveset_pokemon_auto(self, interaction, current):
-    #     return [
-    #         app_commands.Choice(name=pokemon, value=pokemon)
-    #         for pokemon in pokemon_names_disp
-    #         if current.lower() in pokemon.lower()
-    #     ][:25]
-
-    # @moveset.autocomplete("game_name")
-    # async def moveset_gamename_auto(self, interaction, current):
-    #     return [
-    #         app_commands.Choice(name=e, value=e)
-    #         for e in version_names
-    #         if current.lower() in e.lower()
-    #     ][:25]
-
-    # @moveset.autocomplete("learn_type")
-    # async def moveset_learntype_auto(self, interaction, current):
-    #     return [
-    #         app_commands.Choice(name=e.capitalize().replace("-", " "), value=e)
-    #         for e in learn_list.keys()
-    #         if current.lower() in e.lower()
-    #     ][:25]
 
     @commands.hybrid_command(
         name="evo", aliases=["evolution", "evol"], extras={"url": "evolution-chains"}
@@ -1740,10 +1130,9 @@ class Pokemon(commands.Cog):
             pokemon_id = pokedex_dict[pokemon]["num"]
             colour = pokedex_dict[pokemon]["color"]
         except:
-            close = difflib.get_close_matches(pokemon, pokedex_dict.keys(), n=1)
-            if not len(close):
+            close= get_close_matches(pokemon, pokedex_dict.keys())
+            if close is None:
                 return await ctx.send("The Pokemon you've sent doesn't exist")
-            close = close[0]
             pokemon_id = pokedex_dict[close]["num"]
             colour = pokedex_dict[close]["color"]
         if pokemon_id <= 0:
@@ -1863,16 +1252,14 @@ class Pokemon(commands.Cog):
             if upside_down:
                 l.append("You need to flip the console upside-down")
             embed.add_field(name=f"{evolves_from} ➔ {evolves_to}", value="\n".join(l))
-        embed = await embed_this_please(ctx, embed)
+        embed = await add_info_to_embed(ctx, embed)
+        if private is None:private=False
         return await ctx.send(embed=embed, ephemeral=private)
 
     @evolution.autocomplete("pokemon")
+    @pokemon_autocomplete
     async def auto_evo_pokemon(self, interaction, current: str):
-        return [
-            app_commands.Choice(name=pokemon, value=pokemon)
-            for pokemon in pokemon_names_disp
-            if current.lower() in pokemon.lower()
-        ][:25]
+        ...
 
     @commands.command(
         name="comparestats",
@@ -1880,9 +1267,8 @@ class Pokemon(commands.Cog):
         hidden=True,
     )
     async def compare_stats(
-        self, ctx: commands.Context, *pokemon: commands.clean_content
+        self, ctx: commands.Context, *pokemon: str
     ):
-
         embed = discord.Embed(title="Stats comparison")
         not_found = []
         new_list = []
@@ -1890,11 +1276,11 @@ class Pokemon(commands.Cog):
             pok = poke.lower()
             pok = pok.replace(" ", "")
             if pok not in pokemon_names:
-                close = difflib.get_close_matches(pok, pokemon_names, n=1)
-                if not len(close):
+                close = get_close_matches(pok, pokemon_names)
+                if close is None:
                     not_found.append(pok)
                     continue
-                pok = close[0]
+                pok = close
             new_list.append(pok)
         new_list = list(set(new_list))
         if len(new_list) == 1 or len(new_list) > 10:
@@ -1904,16 +1290,6 @@ class Pokemon(commands.Cog):
         for pok in new_list:
             stats = []
             total = 0
-            # pok = pok.lower()
-            # pok = pok.replace(" ", "")
-            # try:
-            #     stats_dict=pokedex_dict[pok]["baseStats"]
-            # except:
-            #     close=difflib.get_close_matches(pok,pokedex_dict.keys(),n=1)
-            #     if not len(close):
-            #         not_found.append(pok)
-            #     pok=close[0]
-            #     stats_dict=pokedex_dict[pok]['baseStats']
             stats_dict = pokedex_dict[pok]["baseStats"]
             for stat_name, value in stats_dict.items():
                 stats.append(f"**{stat_name}**: {value}")
@@ -1935,22 +1311,20 @@ class Pokemon(commands.Cog):
                     value=", ".join(not_found),
                 )
 
-        embed = await embed_this_please(ctx, embed)
+        embed = await add_info_to_embed(ctx, embed)
         await ctx.send(embed=embed)
-
-    @tasks.loop(minutes=5)
-    async def cleanup_gc(self):
-        gc.collect()
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print(f"{Pokemon.__qualname__} up")
+        f"{Pokemon.__qualname__} up"
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         # if message.content.split()[2].lower()=="sprite":return
-        if getattr(self, "sprite_command", True):
+        if not getattr(self, "sprite_command", False):
             self.sprite_command = self.bot.get_command("sprite")
+        if not getattr(self, "SpriteConverter", False):
+            self.SpriteConverter = SpriteConverter() #type:ignore
         if message.author.bot:
             return
         if message.guild is None:
@@ -1970,9 +1344,11 @@ class Pokemon(commands.Cog):
                     return
             for content in strings:
                 try:
-
-                    await ctx.invoke(self.sprite_command, sprite_name=content)
-                except:
+                    await ctx.invoke(
+                        self.sprite_command, #type:ignore
+                        sprite_name=await self.SpriteConverter.convert(ctx, content),
+                    )
+                except commands.BadArgument:
                     pass
         elif message.guild.id != 336642139381301249:
             strings = list(
@@ -1992,12 +1368,14 @@ class Pokemon(commands.Cog):
             for content in strings:
                 try:
                     ctx: commands.Context = await self.bot.get_context(message)
-                    await ctx.invoke(self.sprite_command, sprite_name=content)
+                    await ctx.invoke(self.sprite_command, sprite_name=await self.SpriteConverter.convert(ctx, content),)#type:ignore
                 except:
                     pass
 
     async def cog_load(self) -> None:
-        if self.bot.get_command('moveset') is not None:
-            self.bot.get_command('moveset').helpcog=self
+        if (a:=self.bot.get_command("moveset")) is not None:
+            setattr(a,'helpcog',self)
+
+
 async def setup(bot):
     await bot.add_cog(Pokemon(bot))
