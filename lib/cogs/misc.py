@@ -123,7 +123,7 @@ class Misc(commands.Cog):
     @tasks.loop(minutes=5.0)
     async def presence_update(self):
         assert self.bot.user is not None
-        await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"for @{self.bot.user.name} "+('help!') if self.presence_update.current_loop%2 else 'invite!'))
+        await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"for @{self.bot.user.name} "+('help!' if self.presence_update.current_loop%2 else 'invite!')))
     @presence_update.before_loop
     async def before_presence(self):
         print('waiting to update presence until ready...')
