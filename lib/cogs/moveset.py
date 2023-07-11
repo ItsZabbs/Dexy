@@ -11,8 +11,8 @@ from typing import Dict, List, Optional
 from .pokemon import Pokemon
 from .pokemon import moveid_dict, pokedex_dict, add_info_to_embed
 import ujson
-from utils.autocomplete import pokemon_autocomplete
-from utils.converters import PokemonConverter
+from lib.cogs.utils.autocomplete import pokemon_autocomplete
+from lib.cogs.utils.converters import PokemonConverter
 inverse_moveid_dict:Dict[str,int]={}
 for k,v in moveid_dict.items():
     inverse_moveid_dict[v]=k

@@ -11,8 +11,8 @@ from discord.ext import commands, tasks
 from discord.ext.commands import parameter
 
 from lib.bot import Bot
-from utils.converters import PokemonConverter, SpriteConverter,get_close_matches
-from utils.autocomplete import pokemon_autocomplete
+from lib.cogs.utils.converters import PokemonConverter, SpriteConverter,get_close_matches
+from lib.cogs.utils.autocomplete import pokemon_autocomplete
 from ..db import db
 
 type_emoji_dict = {
