@@ -27,7 +27,7 @@ class Misc(commands.Cog):
         return super().cog_unload()
     @hybrid_command(name='invite',help='Provides an invite link for the bot',extras={"url":"invite"})
     async def sendinvite(self,ctx):
-        embed = discord.Embed(title=f'Add Pokedex Bot to your server!',colour=ctx.author.colour,description=f"Click **[here](https://discord.com/oauth2/authorize?client_id=853556227610116116&permissions=277092812864&scope=bot%20applications.commands)** to invite the bot to your server!")
+        embed = discord.Embed(title=f'Add {self.bot.user.name} to your server!',colour=ctx.author.colour,description=f"Click **[here](https://discord.com/oauth2/authorize?client_id=853556227610116116&permissions=277092812864&scope=bot%20applications.commands)** to invite the bot to your server!")
         await ctx.send(embed=embed)
     @command(name='killtab')
     @commands.check(check_meme_server)
@@ -45,6 +45,7 @@ class Misc(commands.Cog):
     @prefix.command(name="add",help='Adds a prefix , max length is 10 chars',extras={"url":"span-stylecoloryellowhow-to-add-a-prefix-span"})
     @commands.has_permissions(manage_guild=True)
     async def add_prefix(self, ctx, new):
+        return await ctx.send("Prefix commands are disabled for the moment. A database update is happening. Try again in around 24 hours.")
         if len(new) > 10:
             return await ctx.send("The prefix can not be more than 10 characters in length.")
         await db.insert_new_prefix(ctx.guild.id,new)

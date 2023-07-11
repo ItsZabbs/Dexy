@@ -39,6 +39,7 @@ version_names = [
     "Sword, Shield",
     "Brilliant Diamond, Shining Pearl",
     "Legends Arceus",
+    "Scarlet, Violet"
 ]
 learn_list = {
     "level-up": {"id": 1},
@@ -79,6 +80,7 @@ version_dict = {
     "sword-shield": "20",
     "brilliant diamond-shining pearl": "21",
     "legends arceus": "99",
+    "scarlet-violet":"22"
 }
 initial_dict = {
     "rb": "1",
@@ -104,6 +106,7 @@ initial_dict = {
     "swsh": "20",
     "bdsp": "21",
     "pla": "99",
+    "sv":"22"
 }
 
 with open("lib/cogs/pokedexdata/movesets.json", encoding="utf-8") as move:
