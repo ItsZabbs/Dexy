@@ -40,7 +40,7 @@ class DBCache(dict):   # Implementation of an auto populating dict cache
             async with pool.acquire() as conn:
                 assert isinstance(conn, Connection)
                 record = (await conn.fetch(self.db_query, key)) # Record will always be a sequence with one element
-                if record is None:
+                if len(record)==0:
                     await conn.execute(f"INSERT INTO GuildData (guildid) VALUES ({key})")
                     record=(await conn.fetch(self.db_query, key))[0]
                 else:
