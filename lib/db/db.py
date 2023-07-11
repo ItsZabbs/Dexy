@@ -39,7 +39,12 @@ class DBCache(dict):   # Implementation of an auto populating dict cache
                 self.pop(tuple(self.keys())[0])
             async with pool.acquire() as conn:
                 assert isinstance(conn, Connection)
-                record = (await conn.fetch(self.db_query, key))[0]  # Record will always be a sequence with one element
+                record = (await conn.fetch(self.db_query, key)) # Record will always be a sequence with one element
+                if record is None:
+                    await conn.execute(f"INSERT INTO GuildData (guildid) VALUES ({key})")
+                    record=(await conn.fetch(self.db_query, key))[0]
+                else:
+                    record=record[0]
                 return_element = tuple([
                     record[record_name] for record_name in self.record_names
                 ])  # If there are two record_names then return_element will contain both of them

@@ -47,15 +47,6 @@ async def get_prefix(user,message):
     assert isinstance(s:=await db.prefix_cache[message.guild.id],list)
     return commands.when_mentioned_or(*s)(user,message)
 
-
-async def update():
-    async with db.pool.acquire() as conn:
-        assert isinstance(conn,Connection)
-        for guild in bot.guilds:
-            try:
-                await conn.execute("INSERT INTO GuildData (GuildID) VALUES ($1)", guild.id)
-            except UniqueViolationError:
-                pass
             
 class Bot(commands.AutoShardedBot):
     def __init__(self):
@@ -105,15 +96,13 @@ class Bot(commands.AutoShardedBot):
                 await self.invoke(ctx)
 
     async def on_connect(self):
-        await update()
-        print('Updated all guild IDs in database')
+        print("Connected")
 
     async def on_message(self, message:discord.Message):
         if message.author.bot:return
         if message.author == self.user:return
         return await super().on_message(message)
     async def on_ready(self):
-        await update()
         self.ready = True
 
 
