@@ -16,7 +16,6 @@ downloads/
 eggs/
 .eggs/
 lib64/
-lib/cogs/utils/
 parts/
 sdist/
 var/
@@ -163,3 +162,4 @@ download_movesets.py
 lib/pokedex
 lib/cogs/pokedexdata/*.py
 lib/cogs/pokedexdata/*.zip
+lib/cogs/utilsunused
