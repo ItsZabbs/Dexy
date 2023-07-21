@@ -676,7 +676,7 @@ class Pokemon(commands.Cog):
                 return await ctx.send("You can't send more than two types.")
         except KeyError:
             try:
-                name=await PokedexConverter.convert(ctx,name)
+                name=await PokedexConverter.convert(ctx,pokemon_or_move_or_typestring)
                 pokemon_or_move_or_typestring = " ".join(
                     pokedex_dict[name]["types"]
                 ).lower()
