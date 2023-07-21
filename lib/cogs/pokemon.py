@@ -116,9 +116,6 @@ colour_dict = {
 BaseURL = "https://play.pokemonshowdown.com/sprites/"
 serebii = "https://www.serebii.net/pokemon/art/"
 # Alias cache implementation
-alias_cache: Dict[int, Tuple[List[str],List[str]]] = {}
-pokemon_names: list = json.load(open("lib/cogs/pokedexdata/pokemon_names.json"))
-pokemon_names_ani: list = json.load(open("lib/cogs/pokedexdata/pokemon_names_ani.json"))
 location_dict = json.load(
     open("lib/cogs/pokedexdata/location_dict.json", encoding="utf-8")
 )
@@ -168,7 +165,6 @@ with open(
     for k, v in pokedex_dict.items():
         if id_dict.get(str(v["num"]), None) is None:
             id_dict[str(v["num"])] = (k, v["name"])
-    pokemon_names_disp = [v["name"] for v in pokedex_dict.values()]
 with open("lib/cogs/pokedexdata/nonexistentfile.json", encoding="utf-8") as pee:
     moves_dict: dict = json.load(pee)
     moveid_dict = {}
@@ -202,6 +198,7 @@ SPRITE_REGEX = re.compile(
     r"(^|\s)(\*|_)(?P<name>[a-zA-Z0-9-][a-zA-Z0-9 -]*)(\2| |\Z)",
     flags=re.IGNORECASE,
 )
+PokedexConverter=PokemonConverter(list(pokedex_dict.keys()),True)
 messages = [
     'help in keeping the bot up! [Donate](https://buymeacoffee.com/Zabbs "buy me a coffee!!")',
     'donate for the server costs! [Donate](https://buymeacoffee.com/Zabbs "buy me a coffee!!")',
@@ -213,8 +210,8 @@ async def add_info_to_embed(ctx: commands.Context[Bot], embed: discord.Embed):
     if random.randint(1, 30) == 1:
         embed.add_field(
             name="It also seems that you're enjoying the bot...",
-            value=f"Care to write a review on [top.gg](https://top.gg/bot/853556227610116116)? Or "
-            +(random.choice(messages) if ctx.guild is not None and ctx.guild.id!=ctx.bot.rpokemon_guild_id else ""),
+            value=f"Care to write a review on [top.gg](https://top.gg/bot/853556227610116116)?"
+            +"\nOr "+(random.choice(messages) if ctx.guild is not None and ctx.guild.id!=ctx.bot.rpokemon_guild_id else ""),
         )
 
     if ctx.interaction is None and ctx.guild is None:
@@ -679,8 +676,7 @@ class Pokemon(commands.Cog):
                 return await ctx.send("You can't send more than two types.")
         except KeyError:
             try:
-                name=get_close_matches(pokemon_or_move_or_typestring,pokemon_names)
-                if name is None:raise KeyError()
+                name=await PokedexConverter.convert(ctx,name)
                 pokemon_or_move_or_typestring = " ".join(
                     pokedex_dict[name]["types"]
                 ).lower()
@@ -939,7 +935,7 @@ class Pokemon(commands.Cog):
         self,
         ctx: commands.Context,
         *,
-        pokemon: PokemonConverter = parameter(
+        pokemon: PokedexConverter = parameter( #type:ignore
             description="The Pokemon you want to see the info on."
         ),
         private: Optional[bool] = parameter(
@@ -971,7 +967,7 @@ class Pokemon(commands.Cog):
         self,
         ctx,
         *,
-        pokemon: PokemonConverter = parameter(
+        pokemon: PokedexConverter = parameter( #type:ignore
             description="The Pokemon you want to see the info on."
         ),
         private: Optional[bool] = parameter(
@@ -1000,7 +996,7 @@ class Pokemon(commands.Cog):
         self,
         ctx,
         *,
-        pokemon: PokemonConverter = parameter(
+        pokemon: PokedexConverter = parameter( #type:ignore
             description="The Pokemon you want to see the artwork of."
         ),
         private: Optional[bool] = parameter(
@@ -1113,7 +1109,7 @@ class Pokemon(commands.Cog):
         self,
         ctx: commands.Context,
         *,
-        pokemon: str = parameter(
+        pokemon: PokedexConverter = parameter( #type:ignore
             description="The Pokemon you want to see the evolution chain of."
         ),
         private: Optional[bool] = parameter(
@@ -1122,19 +1118,9 @@ class Pokemon(commands.Cog):
         ),
     ):
         """Fetch the evolution chain of a Pokemon"""
-        pokemon = pokemon.lower()
-        pokemon = pokemon.replace(" ", "")
-        if pokemon == "random":
-            pokemon = random.choice(pokemon_names)
-        try:
-            pokemon_id = pokedex_dict[pokemon]["num"]
-            colour = pokedex_dict[pokemon]["color"]
-        except:
-            close= get_close_matches(pokemon, pokedex_dict.keys())
-            if close is None:
-                return await ctx.send("The Pokemon you've sent doesn't exist")
-            pokemon_id = pokedex_dict[close]["num"]
-            colour = pokedex_dict[close]["color"]
+       
+        pokemon_id = pokedex_dict[pokemon]["num"]
+        colour = pokedex_dict[pokemon]["color"]
         if pokemon_id <= 0:
             return await ctx.send("Fakemons aren't available")
         if pokemon_id >= 899:
@@ -1275,14 +1261,7 @@ class Pokemon(commands.Cog):
         not_found = []
         new_list = []
         for poke in pokemon:
-            pok = poke.lower()
-            pok = pok.replace(" ", "")
-            if pok not in pokemon_names:
-                close = get_close_matches(pok, pokemon_names)
-                if close is None:
-                    not_found.append(pok)
-                    continue
-                pok = close
+            pok=await PokedexConverter.convert(ctx=ctx,argument=poke)
             new_list.append(pok)
         new_list = list(set(new_list))
         if len(new_list) == 1 or len(new_list) > 10:

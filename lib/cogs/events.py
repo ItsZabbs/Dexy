@@ -33,7 +33,7 @@ class ErrorView(View):
         self.feedback_webhook = feedback_webhook
 
     @discord.ui.button(
-        label="Do you wish to report this error to the developer?",
+        label="Report this error to the developer?",
         style=discord.ButtonStyle.green,
     )
     async def submit_error(
@@ -87,7 +87,7 @@ class Events(commands.Cog):
     async def on_guild_remove(self, guild: discord.Guild):
         embed = discord.Embed(
             title="Guild left",
-            description=f"ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME : {await self.bot.fetch_user(guild.owner_id)} MEMBER COUNT: {guild.member_count}",
+            description=f"ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME : {await self.bot.fetch_user(guild.owner_id)}\n MEMBER COUNT: {guild.member_count}",
             colour=discord.Color.red(),
         )  # OWNER_NAME : {guild.owner.name}#{guild.owner.discriminator}')
         await self.bot.guild_webhook.send(embed=embed)

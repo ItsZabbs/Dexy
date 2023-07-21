@@ -28,14 +28,19 @@ async def get_sprite_alias(ctx:Context[Bot],argument:str)->str:
             return existingsprites[existingaliases.index(argument.lower())]
     return ""
 if TYPE_CHECKING:
-    PokemonConverter=str
+    class PokemonConverter(Converter):
+        def __init__(self,names:List,closematch:bool=True)->None:
+            ...
+        async def convert(self,ctx:Context[Bot],argument:str)->str:
+            ...
     SpriteConverter=Tuple[bool,bool,str,str]
     CustomConverter=str
 else:
     class PokemonConverter(Converter):
-        def __init__(self,closematch:bool=True) -> None:
+        def __init__(self,names:List[str],closematch:bool=True,) -> None:
             super().__init__()
             self.close=closematch
+            self.names=names
         async def convert(self, ctx: Context[Bot], argument: str) -> str:
             argument=argument.lower()
             if arg:=await get_sprite_alias(ctx,argument):
@@ -43,16 +48,16 @@ else:
                 pokemon.replace("-","")
                 return pokemon
             *_,pokemon=convert_string_to_sprite(argument)
-            if pokemon=="random":
-                return random.choice(pokemon_names)
-            if pokemon in pokemon_names:
+            if pokemon in ("random","prandom"):
+                return random.choice(self.names)
+            if pokemon in self.names:
                 return pokemon.replace("-","")
             elif self.close:
-                name=get_close_matches(pokemon,pokemon_names)
+                name=get_close_matches(pokemon,self.names)
                 if name is not None:return name.replace("-","")
                 raise BadArgument("Could not find that Pokemon.")
             else:
-                raise BadArgument("Could not find that Pokemon."+f" Were you looking for `{name}`?" if (name:=get_close_matches(pokemon,pokemon_names)) is not None else "")
+                raise BadArgument("Could not find that Pokemon."+(f" Were you looking for `{name}`?" if (name:=get_close_matches(pokemon,pokemon_names)) is not None else ""))
 
     class SpriteConverter(Converter):
         """Convert a string into a Sprite Named Tuple"""
