@@ -112,7 +112,7 @@ initial_dict = {
 with open("lib/cogs/pokedexdata/movesets.json", encoding="utf-8") as move:
     movesets:Dict[str,Dict[str,Dict[str,List[Dict[str,int]]]]] = ujson.load(move)
 
-
+PokedexConverter=PokemonConverter(list(pokedex_dict.keys()),True)
 def with_cog(cog: commands.Cog):
     def inner(command: commands.Command):
         command.extras = {'helpcog':cog}
@@ -131,7 +131,7 @@ def with_cog(cog: commands.Cog):
 )
 async def moveset(
     ctx: commands.Context,
-    pokemon: PokemonConverter = parameter(description="The Pokemon you want to see the moveset of."),
+    pokemon: PokedexConverter = parameter(description="The Pokemon you want to see the moveset of."), #type:ignore
     game_name: str = parameter(
         description="The name of the game. Eg. Omega Ruby or use initials like ORAS"
     ),
