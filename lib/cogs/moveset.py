@@ -8,8 +8,7 @@ import difflib
 from copy import deepcopy
 from typing import Dict, List, Optional
 
-from .pokemon import Pokemon
-from .pokemon import moveid_dict, pokedex_dict, add_info_to_embed
+from .pokemon import Pokemon,moveid_dict, pokedex_dict, add_info_to_embed,serebii
 import ujson
 from lib.cogs.utils.autocomplete import pokemon_autocomplete
 from lib.cogs.utils.converters import PokemonConverter
@@ -148,6 +147,7 @@ async def moveset(
     colour = pokedex_dict[pokemon]["color"]
     name = pokedex_dict[pokemon]["name"]
     number = pokedex_dict[pokemon]["num"]
+    url=pokedex_dict[pokemon].get("url","")
     game_name = game_name.lower()
     version_num = initial_dict.get(game_name, None)
     if version_num is None:
@@ -171,19 +171,19 @@ async def moveset(
     learn_type_redefined = str(learn_list[learn_type_redefined[0]]["id"])
     try:
         e = deepcopy(movesets[str(number)][version_num][learn_type_redefined])
-    except:
+    except KeyError:
         return await ctx.send(
             "The Pokemon you sent probably does not exist in that game or it does learn any moves through that method."
         )
     bylevel = {}
-    if e[0].get("level", "jfioewjfo") == "jfioewjfo":
+    if e[0].get("level", None) is None and version_num!="99": #Fix for movesets that are common amongst generations.Eg. Movesets for R,S are available in Emerald only.
         e = deepcopy(
             movesets[str(number)][str(int(version_num) - 1)][learn_type_redefined]
         )
     for d in sorted(e,key=lambda x:x.get('level',1)):
-        l = d.get("level", 1)
+        l = d.get("level", "N/A")
         ls = bylevel.get(l, [])
-        if d.get("level", "jfioewjfo") != "jfioewjfo":
+        if d.get("level", "N/A") != "N/A":
             d.pop("level")
         ls.append(d)
         bylevel.update({l: ls})
@@ -199,8 +199,9 @@ async def moveset(
             n.append(
                 " ".join([e.capitalize() for e in moveid_dict[i["move_id"]].split("-")])
             )
-            name = f"Level {k}" if k != 0 else "Level not applicable"
+            name = f"Level {k}" if k != 0 else "Level N/A"
         embed.add_field(name=name, value=", ".join(n), inline=False)
+    embed.set_thumbnail(url=serebii+url)
     embed = await add_info_to_embed(ctx, embed)
     return await ctx.send(embed=embed, ephemeral=private)
 
