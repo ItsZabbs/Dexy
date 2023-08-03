@@ -211,7 +211,7 @@ async def add_info_to_embed(ctx: commands.Context[Bot], embed: discord.Embed):
         embed.add_field(
             name="It also seems that you're enjoying the bot...",
             value=f"Care to write a review on [top.gg](https://top.gg/bot/853556227610116116)?"
-            +"\nOr "+(random.choice(messages) if ctx.guild is not None and ctx.guild.id!=ctx.bot.rpokemon_guild_id else ""),
+            +(("\nOr "+random.choice(messages)) if ctx.guild is not None and ctx.guild.id!=ctx.bot.rpokemon_guild_id else ""),
         )
 
     if ctx.interaction is None and ctx.guild is None:
