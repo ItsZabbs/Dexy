@@ -1,0 +1,5 @@
+ujson
+asyncpg
+discord.py
+jishaku
+requests
