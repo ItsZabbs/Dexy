@@ -1378,8 +1378,9 @@ class Pokemon(commands.Cog):
     def cog_load(self) -> None:
         if (moveset_command := self.bot.get_command("moveset")) is not None:
             setattr(moveset_command, "helpcog", self)
-        if not hasattr(self,'extracommands') or not self.extracommands:
-            self.extracommands=[moveset_command]
+        if not hasattr(self, "extracommands") or not self.extracommands:
+            self.extracommands = [moveset_command]
+
 
 async def setup(bot):
     await bot.add_cog(Pokemon(bot))
