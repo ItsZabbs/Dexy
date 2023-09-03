@@ -308,5 +308,4 @@ async def setup(bot: Bot):
     bot.add_command(moveset)
     bot.tree.add_command(can_learn)
     moveset.extras['helpcog'] = bot.cogs["Pokemon"]
-    can_learn.extras['helpcog']=bot.cogs["Pokemon"]
-    Pokemon.extracommands = [moveset,can_learn]
+    Pokemon.extracommands = [moveset]

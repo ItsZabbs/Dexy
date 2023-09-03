@@ -11,7 +11,11 @@ from discord.ext import commands, tasks
 from discord.ext.commands import parameter
 
 from lib.bot import Bot
-from lib.cogs.utils.converters import PokemonConverter, SpriteConverter,get_close_matches
+from lib.cogs.utils.converters import (
+    PokemonConverter,
+    SpriteConverter,
+    get_close_matches,
+)
 from lib.cogs.utils.autocomplete import pokemon_autocomplete
 from ..db import db
 
@@ -171,7 +175,7 @@ with open("lib/cogs/pokedexdata/nonexistentfile.json", encoding="utf-8") as pee:
     for k, v in moves_dict.items():
         ide = v["id"]
         moveid_dict[ide] = k
-    move_names :Tuple[str]= tuple(moves_dict.keys())
+    move_names: Tuple[str] = tuple(moves_dict.keys())
 evol_dict = json.load(
     open("lib/cogs/pokedexdata/pokemon_evolutions.json", encoding="utf-8")
 )
@@ -181,7 +185,7 @@ with open(
     abil_flav_dict: dict = json.load(abilflav)
 with open("lib/cogs/pokedexdata/ability_stuff.json", encoding="utf-8") as abilstuff:
     abil_stuff_dict: dict = json.load(abilstuff)
-    abil_names :Tuple[str]= tuple(v["name"] for v in abil_stuff_dict.values())
+    abil_names: Tuple[str] = tuple(v["name"] for v in abil_stuff_dict.values())
 with open(
     "lib/cogs/pokedexdata/item_names_and_flavour_combined_english.json",
     encoding="utf-8",
@@ -198,7 +202,7 @@ SPRITE_REGEX = re.compile(
     r"(^|\s)(\*|_)(?P<name>[a-zA-Z0-9-][a-zA-Z0-9 -]*)(\2| |\Z)",
     flags=re.IGNORECASE,
 )
-PokedexConverter=PokemonConverter(list(pokedex_dict.keys()),True)
+PokedexConverter = PokemonConverter(list(pokedex_dict.keys()), True)
 messages = [
     'help in keeping the bot up! [Donate](https://buymeacoffee.com/Zabbs "buy me a coffee!!")',
     'donate for the server costs! [Donate](https://buymeacoffee.com/Zabbs "buy me a coffee!!")',
@@ -211,7 +215,11 @@ async def add_info_to_embed(ctx: commands.Context[Bot], embed: discord.Embed):
         embed.add_field(
             name="It also seems that you're enjoying the bot...",
             value=f"Care to write a review on [top.gg](https://top.gg/bot/853556227610116116)?"
-            +(("\nOr "+random.choice(messages)) if ctx.guild is not None and ctx.guild.id!=ctx.bot.rpokemon_guild_id else ""),
+            + (
+                ("\nOr " + random.choice(messages))
+                if ctx.guild is not None and ctx.guild.id != ctx.bot.rpokemon_guild_id
+                else ""
+            ),
         )
 
     if ctx.interaction is None and ctx.guild is None:
@@ -246,7 +254,6 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
         Abilities = "Abilities"
     abilities = ", ".join(abilities)
     if not lite:
-
         types = ", ".join(pokemon_dict["types"])
         if len(pokemon_dict["types"]) == 1:
             multipleTypes = "Type"
@@ -380,7 +387,8 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
         tier = pokemon_dict.get("Tier", None)
         if tier is None:
             tier = pokedex_dict.get(
-                pokemon_dict["baseSpecies"].lower().replace("-", ""),{}).get("Tier","None")
+                pokemon_dict["baseSpecies"].lower().replace("-", ""), {}
+            ).get("Tier", "None")
         urllist = []
         try:
             name = pokemon_dict["baseSpecies"]
@@ -499,12 +507,12 @@ async def convert_four_baseurl(
     return url
 
 
-
-
 class Pokemon(commands.Cog):
     """All of the Pokemon related commands"""
 
+    extracommands: List
     url = "pokemon-related-commands"
+
     def __init__(self, bot: Bot):
         self.bot = bot
 
@@ -528,7 +536,9 @@ class Pokemon(commands.Cog):
         ),
     ):
         """Adds an alias to a sprite for easy access and memes"""
-        assert ctx.guild is not None and self.bot.alias_cache is not None#Command can only be used in guilds due to the permission check
+        assert (
+            ctx.guild is not None and self.bot.alias_cache is not None
+        )  # Command can only be used in guilds due to the permission check
         alias = alias.lower()
         back, shiny, sprite_type, pokemon = sprite
         url = await convert_four_baseurl(back, shiny, pokemon, sprite_type.lower(), ctx)
@@ -536,8 +546,12 @@ class Pokemon(commands.Cog):
             async with cs.get(url=BaseURL + url) as r:
                 if r.status != 200:
                     raise KeyError("The sprite is not available in that format...")
-        await db.insert_new_alias(ctx.guild.id,alias,f"{pokemon} {sprite_type if sprite_type!='none' else ''} {'back' if back else ''} {'shiny' if shiny else ''}".strip())
-        await ctx.message.add_reaction("✅")    
+        await db.insert_new_alias(
+            ctx.guild.id,
+            alias,
+            f"{pokemon} {sprite_type if sprite_type!='none' else ''} {'back' if back else ''} {'shiny' if shiny else ''}".strip(),
+        )
+        await ctx.message.add_reaction("✅")
 
     @alias.command(
         name="remove",
@@ -548,7 +562,7 @@ class Pokemon(commands.Cog):
         self, ctx, alias: str = parameter(description="The alias to remove.")
     ):
         """Removes an existing alias"""
-        await db.remove_alias(ctx.guild.id,alias)
+        await db.remove_alias(ctx.guild.id, alias)
         await ctx.message.add_reaction("✅")
 
     @alias.command(
@@ -556,10 +570,10 @@ class Pokemon(commands.Cog):
     )
     async def list_aliases(self, ctx):
         """Lists all the server aliases for a pokemon"""
-        aliases=await db.alias_cache[ctx.guild.id]
-        assert isinstance(aliases,tuple)
-        all_aliases=[]
-        for n, (e, v) in enumerate(zip(*aliases),start=1):
+        aliases = await db.alias_cache[ctx.guild.id]
+        assert isinstance(aliases, tuple)
+        all_aliases = []
+        for n, (e, v) in enumerate(zip(*aliases), start=1):
             if e or v:
                 all_aliases.append(f"{n} : `{e}` ➔ `{v}`")
         if not all_aliases:
@@ -635,7 +649,8 @@ class Pokemon(commands.Cog):
             name="External Resources", value=f'{" • ".join(urldict)}', inline=False
         )
         embed = await add_info_to_embed(ctx, embed)
-        if private is None:private=False
+        if private is None:
+            private = False
         await ctx.send(embed=embed, ephemeral=private)
 
     @ability.autocomplete("ability")
@@ -676,7 +691,9 @@ class Pokemon(commands.Cog):
                 return await ctx.send("You can't send more than two types.")
         except KeyError:
             try:
-                name=await PokedexConverter.convert(ctx,pokemon_or_move_or_typestring)
+                name = await PokedexConverter.convert(
+                    ctx, pokemon_or_move_or_typestring
+                )
                 pokemon_or_move_or_typestring = " ".join(
                     pokedex_dict[name]["types"]
                 ).lower()
@@ -684,14 +701,16 @@ class Pokemon(commands.Cog):
                 if image_link:
                     image_link = f"https://www.serebii.net/pokemon/art/{image_link}.png"
             except KeyError:
-                name=get_close_matches(pokemon_or_move_or_typestring,moves_dict.keys())
-                if name is None:return await ctx.send(
-                    "I couldn't match your input to a type or pokemon or move"
+                name = get_close_matches(
+                    pokemon_or_move_or_typestring, moves_dict.keys()
                 )
-                pokemon_or_move_or_typestring = type_dict[
-                    moves_dict[name]["type_id"]
-                ][0].lower()
-                    
+                if name is None:
+                    return await ctx.send(
+                        "I couldn't match your input to a type or pokemon or move"
+                    )
+                pokemon_or_move_or_typestring = type_dict[moves_dict[name]["type_id"]][
+                    0
+                ].lower()
 
         for two in pokemon_or_move_or_typestring.split():
             typetobeseen = types[two]["damageTaken"]
@@ -704,9 +723,9 @@ class Pokemon(commands.Cog):
                     resistantFrom.append(v)
                 else:
                     immuneFrom.append(v)
-            two=two.capitalize()
+            two = two.capitalize()
             for k, v in types.items():
-                k=k.capitalize()
+                k = k.capitalize()
                 v = v["damageTaken"]
                 if v[two] == 1:
                     supereffectiveTo.append(k)
@@ -763,7 +782,7 @@ class Pokemon(commands.Cog):
         )
         embed = discord.Embed(
             title=emojis + name,
-            colour=discord.Color.from_rgb(*colour_dict[two.lower()]),#type:ignore
+            colour=discord.Color.from_rgb(*colour_dict[two.lower()]),  # type:ignore
             description=", ".join(
                 [e.capitalize() for e in pokemon_or_move_or_typestring.split()]
             ),
@@ -849,8 +868,8 @@ class Pokemon(commands.Cog):
         close_itemname = get_close_matches(itemname, item_names)
         if close_itemname is None:
             return await ctx.send(
-            "You've sent an incorrect spelling or a wrong item name"
-        )
+                "You've sent an incorrect spelling or a wrong item name"
+            )
         item_dict = item_stuff_dict[close_itemname]
         flavour_text_item = item_dict["FlavourText"]
         sprite = item_dict["sprite"]
@@ -861,7 +880,7 @@ class Pokemon(commands.Cog):
         )
         if sprite:
             embed.set_thumbnail(url=sprite)
-        itemname=itemname.replace("é","e")
+        itemname = itemname.replace("é", "e")
         underscorename = itemname.replace(" ", "_")
         hyphenlink = itemname.replace(" ", "-")
 
@@ -935,7 +954,7 @@ class Pokemon(commands.Cog):
         self,
         ctx: commands.Context,
         *,
-        pokemon: PokedexConverter = parameter( #type:ignore
+        pokemon: PokedexConverter = parameter(  # type:ignore
             description="The Pokemon you want to see the info on."
         ),
         private: Optional[bool] = parameter(
@@ -948,7 +967,8 @@ class Pokemon(commands.Cog):
         pokemon_dict = pokedex_dict[pokemon]
         embed = await get_pokedex_stuff(pokemon_dict, lite)
         embed = await add_info_to_embed(ctx, embed)
-        if private is None:private=False
+        if private is None:
+            private = False
         await ctx.send(embed=embed, ephemeral=private)
 
     @pokedex.autocomplete("pokemon")
@@ -967,7 +987,7 @@ class Pokemon(commands.Cog):
         self,
         ctx,
         *,
-        pokemon: PokedexConverter = parameter( #type:ignore
+        pokemon: PokedexConverter = parameter(  # type:ignore
             description="The Pokemon you want to see the info on."
         ),
         private: Optional[bool] = parameter(
@@ -996,7 +1016,7 @@ class Pokemon(commands.Cog):
         self,
         ctx,
         *,
-        pokemon: PokedexConverter = parameter( #type:ignore
+        pokemon: PokedexConverter = parameter(  # type:ignore
             description="The Pokemon you want to see the artwork of."
         ),
         private: Optional[bool] = parameter(
@@ -1047,7 +1067,7 @@ class Pokemon(commands.Cog):
                     "Looks like the move you requested doesn't exist..."
                 )
             move_dict = moves_dict[name]
-            
+
         urllist = []
         newname = []
         name = name.split("-")
@@ -1109,7 +1129,7 @@ class Pokemon(commands.Cog):
         self,
         ctx: commands.Context,
         *,
-        pokemon: PokedexConverter = parameter( #type:ignore
+        pokemon: PokedexConverter = parameter(  # type:ignore
             description="The Pokemon you want to see the evolution chain of."
         ),
         private: Optional[bool] = parameter(
@@ -1118,13 +1138,15 @@ class Pokemon(commands.Cog):
         ),
     ):
         """Fetch the evolution chain of a Pokemon"""
-       
+
         pokemon_id = pokedex_dict[pokemon]["num"]
         colour = pokedex_dict[pokemon]["color"]
         if pokemon_id <= 0:
             return await ctx.send("Fakemons aren't available")
         if pokemon_id >= 899:
-            return await ctx.send("Sorry, but only Pokemon till Generation 8 (SwSh) are supported.\nThe developer does not plan to add the latest Pokemon's evolutions due to the various different complicated evolution lines introduced.")
+            return await ctx.send(
+                "Sorry, but only Pokemon till Generation 8 (SwSh) are supported.\nThe developer does not plan to add the latest Pokemon's evolutions due to the various different complicated evolution lines introduced."
+            )
         try:
             evol_line = evol_lines[str(pokemon_id).lower()]
         except KeyError:
@@ -1241,7 +1263,8 @@ class Pokemon(commands.Cog):
                 l.append("You need to flip the console upside-down")
             embed.add_field(name=f"{evolves_from} ➔ {evolves_to}", value="\n".join(l))
         embed = await add_info_to_embed(ctx, embed)
-        if private is None:private=False
+        if private is None:
+            private = False
         return await ctx.send(embed=embed, ephemeral=private)
 
     @evolution.autocomplete("pokemon")
@@ -1254,14 +1277,12 @@ class Pokemon(commands.Cog):
         aliases=["comp_stat", "stats_diff", "cstats", "compstat"],
         hidden=True,
     )
-    async def compare_stats(
-        self, ctx: commands.Context, *pokemon: str
-    ):
+    async def compare_stats(self, ctx: commands.Context, *pokemon: str):
         embed = discord.Embed(title="Stats comparison")
         not_found = []
         new_list = []
         for poke in pokemon:
-            pok=await PokedexConverter.convert(ctx=ctx,argument=poke)
+            pok = await PokedexConverter.convert(ctx=ctx, argument=poke)
             new_list.append(pok)
         new_list = list(set(new_list))
         if len(new_list) == 1 or len(new_list) > 10:
@@ -1302,10 +1323,8 @@ class Pokemon(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         # if message.content.split()[2].lower()=="sprite":return
-        if not getattr(self, "sprite_command", False):
-            self.sprite_command = self.bot.get_command("sprite")
         if not getattr(self, "SpriteConverter", False):
-            self.SpriteConverter = SpriteConverter() #type:ignore
+            self.SpriteConverter = SpriteConverter()  # type:ignore
         if message.author.bot:
             return
         if message.guild is None:
@@ -1326,7 +1345,7 @@ class Pokemon(commands.Cog):
             for content in strings:
                 try:
                     await ctx.invoke(
-                        self.sprite_command, #type:ignore
+                        self.sprite,
                         sprite_name=await self.SpriteConverter.convert(ctx, content),
                     )
                 except commands.BadArgument:
@@ -1349,14 +1368,18 @@ class Pokemon(commands.Cog):
             for content in strings:
                 try:
                     ctx: commands.Context = await self.bot.get_context(message)
-                    await ctx.invoke(self.sprite_command, sprite_name=await self.SpriteConverter.convert(ctx, content),)#type:ignore
+                    await ctx.invoke(
+                        self.sprite,
+                        sprite_name=await self.SpriteConverter.convert(ctx, content),
+                    )
                 except:
                     pass
 
-    async def cog_load(self) -> None:
-        if (a:=self.bot.get_command("moveset")) is not None:
-            setattr(a,'helpcog',self)
-
+    def cog_load(self) -> None:
+        if (moveset_command := self.bot.get_command("moveset")) is not None:
+            setattr(moveset_command, "helpcog", self)
+        if not hasattr(self,'extracommands') or not self.extracommands:
+            self.extracommands=[moveset_command]
 
 async def setup(bot):
     await bot.add_cog(Pokemon(bot))
