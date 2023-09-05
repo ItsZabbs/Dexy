@@ -4,3 +4,5 @@ discord.py
 jishaku
 requests
 python-dotenv
+discord-ext-menus @ git+https://github.com/Rapptz/discord-ext-menus
+psutil
