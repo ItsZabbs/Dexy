@@ -3,3 +3,4 @@ asyncpg
 discord.py
 jishaku
 requests
+python-dotenv
