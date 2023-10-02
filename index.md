@@ -46,7 +46,7 @@ Command - `dexy [ability|abil] <ability-name>`
 ## Moves
 Description- Sends all kinds of information about a move <br>
 Command - `dexy move <move-name>`
-<br>`<ability-name>` can be any Pokemon move.
+<br>`<move-name>` can be any Pokemon move.
 <br>Example usage:<br>
 `dexy move lick` - Provides the information the move Lick.
 
