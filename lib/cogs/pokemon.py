@@ -392,7 +392,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
         tier = pokemon_dict.get("Tier", None)
         if tier is None:
             tier = pokedex_dict.get(
-                pokemon_dict["baseSpecies"].lower().replace("-", ""), {}
+                pokemon_dict.get("baseSpecies","").lower().replace("-", ""), {}
             ).get("Tier", "None")
         urllist = []
         try:
