@@ -216,7 +216,7 @@ messages = [
 async def add_info_to_embed(ctx: commands.Context[Bot], embed: discord.Embed):
     if random.randint(1, 20) == 1:
         embed.add_field(
-            name="We hope you're enjoying the bot",
+            name="**We really hope you're enjoying the bot...**",
             value=messages[0],
         )
 
