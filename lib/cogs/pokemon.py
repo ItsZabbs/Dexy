@@ -209,7 +209,7 @@ SPRITE_REGEX = re.compile(
 )
 PokedexConverter = PokemonConverter(list(pokedex_dict.keys()), True)
 messages = [
-    "Support our bot's journey! Your contribution on [Top.gg](https://top.gg/bot/853556227610116116) and [BuyMeACoffee](https://www.buymeacoffee.com/zabbs) helps cover server costs, ensuring our Discord bot stays online and free for all. Thank you!",
+    "Support our bot's journey! Your contribution on [Top.gg](https://top.gg/bot/853556227610116116){bmc} helps cover server costs, ensuring our Discord bot stays online and free for all. Thank you!",
 ]
 
 
@@ -217,7 +217,7 @@ async def add_info_to_embed(ctx: commands.Context[Bot], embed: discord.Embed):
     if random.randint(1, 20) == 1:
         embed.add_field(
             name="**We really hope you're enjoying the bot...**",
-            value=messages[0],
+            value=messages[0].format(bmc=" and [BuyMeACoffee](https://www.buymeacoffee.com/zabbs)" if ctx.guild is not None and ctx.guild.id!=111504456838819840 else ""),
         )
 
     if ctx.interaction is None and ctx.guild is None:
