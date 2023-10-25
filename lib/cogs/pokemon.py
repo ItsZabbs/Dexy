@@ -217,7 +217,7 @@ async def add_info_to_embed(ctx: commands.Context[Bot], embed: discord.Embed):
     if random.randint(1, 20) == 1:
         embed.add_field(
             name="**We really hope you're enjoying the bot...**",
-            value=messages[0].format(" and [BuyMeACoffee](https://www.buymeacoffee.com/zabbs)" if ctx.guild is not None and ctx.guild.id!=111504456838819840 else ""),
+            value=messages[0].format(bmc=" and [BuyMeACoffee](https://www.buymeacoffee.com/zabbs)" if ctx.guild is not None and ctx.guild.id!=111504456838819840 else ""),
         )
 
     if ctx.interaction is None and ctx.guild is None:
