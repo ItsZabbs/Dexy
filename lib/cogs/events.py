@@ -214,7 +214,10 @@ class Events(commands.Cog):
             usage=record[0]['usage']
             assert isinstance(overallcmdmemusage,float)
             aftermemusage= self.max_mem * (self.process.memory_percent() / 100)
-            avg=(aftermemusage-self.mem_log.pop(cmdid)+overallcmdmemusage)/usage
+        
+            avg=aftermemusage-self.mem_log.pop(cmdid)
+            if usage>=1:
+                avg=(avg+overallcmdmemusage)/2
             await conn.execute("update cmdstats set usage=usage+1,memusage=$ where cmdname=$2",avg,cmdname)
 
 async def setup(bot: Bot):
