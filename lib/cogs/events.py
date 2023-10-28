@@ -2,6 +2,8 @@ import datetime
 from asyncpg import UniqueViolationError
 import traceback
 from typing import Union
+from psutil import Process,virtual_memory
+from os import getpid
 
 import discord
 from discord.ext import commands, tasks
@@ -35,7 +37,7 @@ class ErrorView(View):
     @discord.ui.button(
         label="Report this error to the developer?",
         style=discord.ButtonStyle.green,
-    )
+    ) #type:ignore
     async def submit_error(
         self, interaction: discord.Interaction, button: discord.Button
     ):
@@ -54,7 +56,9 @@ class Events(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.guild_log = {"Added": 0, "Left": 0}
-
+        self.mem_log = {}
+        self.max_mem=virtual_memory().total
+        self.process=Process()
     async def cog_load(self) -> None:
         self.post_guild_eod.start()
         return await super().cog_load()
@@ -75,6 +79,7 @@ class Events(commands.Cog):
             title="Guild added which existed in DB before"
         else:
             title="Guild added"
+        assert guild.owner_id is not None
         embed = discord.Embed(
             title=title,
             description=f"ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME: {await self.bot.fetch_user(guild.owner_id)}\n MEMBER COUNT: {guild.member_count}",
@@ -85,6 +90,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
+        assert guild.owner_id is not None
         embed = discord.Embed(
             title="Guild left",
             description=f"ID : {guild.id}\n NAME : {guild.name}\n OWNERID : {guild.owner_id}\n OWNER USERNAME : {await self.bot.fetch_user(guild.owner_id)}\n MEMBER COUNT: {guild.member_count}",
@@ -101,6 +107,7 @@ class Events(commands.Cog):
             embed = discord.Embed(
                 title="Error", description=err, colour=discord.Color.red()
             )
+            
             if ctx.interaction is None:
                 embed.add_field(
                     name="Command used -", value=ctx.message.content, inline=False
@@ -170,11 +177,45 @@ class Events(commands.Cog):
         )
     )
     async def post_guild_eod(self):
+        if self.guild_log['Added']==self.guild_log['Left']==0:return
         await self.bot.guild_webhook.send(
             f"Guilds added today: {self.guild_log['Added']}\nGuilds removed today: {self.guild_log['Left']}"
         )
         self.guild_log.update({"Added": 0, "Left": 0})
+    @commands.Cog.listener('on_command_completion')
+    async def on_ext_command_completion(self,ctx:commands.Context):
+        assert ctx.command is not None
+        await self.command_stats(ctx.command.name,ctx.message.id)
 
+    @commands.Cog.listener('on_app_command_completion')
+    async def on_app_command_completion(self,interaction:discord.Interaction,command:discord.app_commands.Command):
+        await self.command_stats(command.name,interaction.id)
+
+    @commands.Cog.listener('on_interaction')
+    async def on_app_command_initiate(self,interaction:discord.Interaction):
+        if interaction.command is not None and isinstance(interaction.command,discord.app_commands.Command):
+            await self.log_memory(cmdname=interaction.command.name,id=interaction.id)
+
+    @commands.Cog.listener('on_command')
+    async def on_command(self,ctx:commands.Context):
+        assert ctx.command is not None
+        await self.log_memory(cmdname=ctx.command.name,id=ctx.message.id)
+
+    async def log_memory(self,cmdname:str,id:int):
+        mem_usage = self.max_mem * (self.process.memory_percent() / 100)
+        self.mem_log.update({id:mem_usage})
+
+    async def command_stats(self,cmdname:str,cmdid:int):
+        async with self.bot.pool.acquire() as conn:
+            import asyncpg
+            conn:asyncpg.Connection
+            record:list[asyncpg.Record]=await conn.fetch("SELECT usage,memusage from cmdstats where cmdname=$1",cmdname)
+            overallcmdmemusage=record[0]['memusage']
+            usage=record[0]['usage']
+            assert isinstance(overallcmdmemusage,float)
+            aftermemusage= self.max_mem * (self.process.memory_percent() / 100)
+            avg=(aftermemusage-self.mem_log.pop(cmdid)+overallcmdmemusage)/usage
+            await conn.execute("update cmdstats set usage=usage+1,memusage=$ where cmdname=$2",avg,cmdname)
 
 async def setup(bot: Bot):
     await bot.add_cog(Events(bot))
