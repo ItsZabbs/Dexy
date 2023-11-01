@@ -177,7 +177,7 @@ class Events(commands.Cog):
         )
     )
     async def post_guild_eod(self):
-        if self.guild_log['Added']==self.guild_log['Left']==0:return
+        if self.guild_log['Added']==self.guild_log['Left'] and self.guild_log['Left']==0:return
         await self.bot.guild_webhook.send(
             f"Guilds added today: {self.guild_log['Added']}\nGuilds removed today: {self.guild_log['Left']}"
         )
@@ -191,32 +191,13 @@ class Events(commands.Cog):
     async def on_app_command_completion(self,interaction:discord.Interaction,command:discord.app_commands.Command):
         await self.command_stats(command.name,interaction.id)
 
-    @commands.Cog.listener('on_interaction')
-    async def on_app_command_initiate(self,interaction:discord.Interaction):
-        if interaction.command is not None and isinstance(interaction.command,discord.app_commands.Command):
-            await self.log_memory(cmdname=interaction.command.name,id=interaction.id)
-
-    @commands.Cog.listener('on_command')
-    async def on_command(self,ctx:commands.Context):
-        assert ctx.command is not None
-        await self.log_memory(cmdname=ctx.command.name,id=ctx.message.id)
-
-    async def log_memory(self,cmdname:str,id:int):
-        mem_usage = self.max_mem * (self.process.memory_percent() / 100)
-        self.mem_log.update({id:mem_usage})
-
     async def command_stats(self,cmdname:str,cmdid:int):
         async with self.bot.pool.acquire() as conn:
             import asyncpg
             conn:asyncpg.Connection
             record:list[asyncpg.Record]=await conn.fetch("SELECT usage,memusage from cmdstats where cmdname=$1",cmdname)
-            overallcmdmemusage=record[0]['memusage']
-            usage=record[0]['usage']
-            aftermemusage= self.max_mem * (self.process.memory_percent() / 100)
-            avg=aftermemusage-self.mem_log.pop(cmdid)
-            if usage>=1:
-                avg=(avg+overallcmdmemusage)/2
-            await conn.execute("update cmdstats set usage=usage+1,memusage=$ where cmdname=$2",avg,cmdname)
+            if not record:return
+            await conn.execute("update cmdstats set usage=usage+1 where cmdname=$1",cmdname)
 
 async def setup(bot: Bot):
     await bot.add_cog(Events(bot))
