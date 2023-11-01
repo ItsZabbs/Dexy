@@ -1,15 +1,16 @@
 from lib.bot import Bot
 from lib.cogs.pokemon import Pokemon
 from discord.ext import commands
-from discord import app_commands,Interaction
+from discord import app_commands
 from discord.ext.commands import parameter
 import discord
 import difflib
 from copy import deepcopy
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from .pokemon import Pokemon,moveid_dict, pokedex_dict, add_info_to_embed,serebii
-import ujson
+
+from lib.cogs.utils import load_files_into_variable
 from lib.cogs.utils.autocomplete import pokemon_autocomplete
 from lib.cogs.utils.converters import PokemonConverter
 inverse_moveid_dict:Dict[str,int]={}
@@ -108,9 +109,7 @@ initial_dict = {
     "sv":"22"
 }
 
-with open("lib/cogs/pokedexdata/movesets.json", encoding="utf-8") as move:
-    movesets:Dict[str,Dict[str,Dict[str,List[Dict[str,int]]]]] = ujson.load(move)
-
+movesets:Dict[str,Dict[str,Dict[str,List[Dict[str,int]]]]]=load_files_into_variable("lib/cogs/pokedexdata/movesets.json")
 PokedexConverter=PokemonConverter(list(pokedex_dict.keys()),True)
 def with_cog(cog: commands.Cog):
     def inner(command: commands.Command):
