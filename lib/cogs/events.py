@@ -212,9 +212,7 @@ class Events(commands.Cog):
             record:list[asyncpg.Record]=await conn.fetch("SELECT usage,memusage from cmdstats where cmdname=$1",cmdname)
             overallcmdmemusage=record[0]['memusage']
             usage=record[0]['usage']
-            assert isinstance(overallcmdmemusage,float)
             aftermemusage= self.max_mem * (self.process.memory_percent() / 100)
-        
             avg=aftermemusage-self.mem_log.pop(cmdid)
             if usage>=1:
                 avg=(avg+overallcmdmemusage)/2
