@@ -1,13 +1,12 @@
 import random
 import re
 from copy import deepcopy
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 import aiohttp
 import discord
-import ujson as json
 from discord import app_commands
-from discord.ext import commands, tasks
+from discord.ext import commands
 from discord.ext.commands import parameter
 
 from lib.bot import Bot
@@ -16,11 +15,7 @@ from lib.cogs.utils.converters import (
     SpriteConverter,
     get_close_matches,
 )
-from lib.cogs.utils.converters import (
-    PokemonConverter,
-    SpriteConverter,
-    get_close_matches,
-)
+from lib.cogs.utils import load_files_into_variable
 from lib.cogs.utils.autocomplete import pokemon_autocomplete
 from ..db import db
 
@@ -44,7 +39,6 @@ type_emoji_dict = {
     "steel": "<:steel:985956509156515920>",
     "water": "<:water:985956512679735328>",
 }
-
 back_dict = {
     "afd": "afd-back",
     "none": "ani-back",
@@ -122,15 +116,6 @@ colour_dict = {
     "unknown": (104, 160, 144),
     "shadow": (104, 160, 144),
 }
-BaseURL = "https://play.pokemonshowdown.com/sprites/"
-serebii = "https://www.serebii.net/pokemon/art/"
-# Alias cache implementation
-location_dict = json.load(
-    open("lib/cogs/pokedexdata/location_dict.json", encoding="utf-8")
-)
-evol_lines = json.load(
-    open("lib/cogs/pokedexdata/pokemon_evolution_lines.json", encoding="utf-8")
-)
 damage_dict = {
     1: "<:status:855828384139051048>",
     2: "<:physical:855828733880303626>",
@@ -164,50 +149,40 @@ abil_rating_dict = {
     4: "Very Useful",
     5: "Essential",
 }
-with open("lib/cogs/pokedexdata/typechart.json", encoding="utf-8") as typechart:
-    types: dict = json.load(typechart)
-with open(
-    "lib/cogs/pokedexdata/pokemon_stuff_english_only.json", encoding="utf-8"
-) as hmm:
-    pokedex_dict: dict = json.load(hmm)
-    id_dict = {}
-    for k, v in pokedex_dict.items():
-        if id_dict.get(str(v["num"]), None) is None:
-            id_dict[str(v["num"])] = (k, v["name"])
-with open("lib/cogs/pokedexdata/nonexistentfile.json", encoding="utf-8") as pee:
-    moves_dict: dict = json.load(pee)
-    moveid_dict = {}
-    for k, v in moves_dict.items():
-        ide = v["id"]
-        moveid_dict[ide] = k
-    move_names: Tuple[str] = tuple(moves_dict.keys())
-evol_dict = json.load(
-    open("lib/cogs/pokedexdata/pokemon_evolutions.json", encoding="utf-8")
-)
-with open(
-    "lib/cogs/pokedexdata/abilities_flavour_text_english_only.json", encoding="utf-8"
-) as abilflav:
-    abil_flav_dict: dict = json.load(abilflav)
-with open("lib/cogs/pokedexdata/ability_stuff.json", encoding="utf-8") as abilstuff:
-    abil_stuff_dict: dict = json.load(abilstuff)
-    abil_names: Tuple[str] = tuple(v["name"] for v in abil_stuff_dict.values())
-with open(
-    "lib/cogs/pokedexdata/item_names_and_flavour_combined_english.json",
-    encoding="utf-8",
-) as item_st:
-    item_stuff_dict: dict = json.load(item_st)
-item_id_dict = json.load(
-    open("lib/cogs/pokedexdata/item_names_english_only.json", encoding="utf-8")
-)
+
+BaseURL = "https://play.pokemonshowdown.com/sprites/"
+serebii = "https://www.serebii.net/pokemon/art/"
+# Alias cache implementation
+location_dict=load_files_into_variable("lib/cogs/pokedexdata/location_dict.json")
+location_dict = load_files_into_variable("lib/cogs/pokedexdata/location_dict.json")
+evol_lines = load_files_into_variable("lib/cogs/pokedexdata/pokemon_evolution_lines.json")
+types=load_files_into_variable("lib/cogs/pokedexdata/typechart.json")
+pokedex_dict=load_files_into_variable("lib/cogs/pokedexdata/pokemon_stuff_english_only.json")
+moves_dict=load_files_into_variable("lib/cogs/pokedexdata/nonexistentfile.json")
+move_names: Tuple[str,...] = tuple(moves_dict.keys())
+evol_dict=load_files_into_variable("lib/cogs/pokedexdata/pokemon_evolutions.json")
+abil_flav_dict=load_files_into_variable("lib/cogs/pokedexdata/abilities_flavour_text_english_only.json")
+abil_stuff_dict=load_files_into_variable("lib/cogs/pokedexdata/ability_stuff.json")
+abil_names: Tuple[str,...] = tuple(v["name"] for v in abil_stuff_dict.values())
+item_stuff_dict=load_files_into_variable("lib/cogs/pokedexdata/item_names_and_flavour_combined_english.json")
+item_id_dict=load_files_into_variable("lib/cogs/pokedexdata/item_names_english_only.json")
 item_names = tuple(name for name in item_id_dict.values())
-with open("lib/cogs/pokedexdata/movesets.json", encoding="utf-8") as move:
-    movesets = json.load(move)
+
+id_dict = {}
+for k, v in pokedex_dict.items():
+    if id_dict.get(str(v["num"]), None) is None:
+        id_dict[str(v["num"])] = (k, v["name"])
+moveid_dict = {}
+for k, v in moves_dict.items():
+    idnumber = v["id"]
+    moveid_dict[idnumber] = k
+PokedexConverter = PokemonConverter(list(pokedex_dict.keys()), True)
 
 SPRITE_REGEX = re.compile(
     r"(^|\s)(\*|_)(?P<name>[a-zA-Z0-9-][a-zA-Z0-9 -]*)(\2| |\Z)",
     flags=re.IGNORECASE,
 )
-PokedexConverter = PokemonConverter(list(pokedex_dict.keys()), True)
+
 messages = [
     "Support our bot's journey! Your contribution on [Top.gg](https://top.gg/bot/853556227610116116){bmc} helps cover server costs, ensuring our Discord bot stays online and free for all. Thank you!",
 ]
