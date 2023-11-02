@@ -18,8 +18,8 @@ sprite_types=re.compile(r"(^| )"+r"( |^|\Z)|(^| )".join(["rs", "bw", "yellow", "
 SpritePokemon=namedtuple('SpriteInfo',['back','shiny','sprite_type','pokemon'])
 
 
-def get_close_matches(argument:str,possibilities:Iterable[str])->Union[str,None]:
-    close=difflib.get_close_matches(argument,possibilities,n=1)
+def get_close_matches(argument:str,possibilities:Iterable[str],cutoff:float=0.6)->Union[str,None]:
+    close=difflib.get_close_matches(argument,possibilities,n=1,cutoff=cutoff)
     return close[0] if close else None
 async def get_sprite_alias(ctx:Context[Bot],argument:str)->str:
     if ctx.guild is not None:
