@@ -98,7 +98,7 @@ class Misc(commands.Cog):
     @commands.cooldown(1,60.0,BucketType.user)
     @hybrid_command(name='feedback',aliases=['feed','back'],extras={"url":"feedback"})
     @app_commands.describe(feedback="The feedback you want to send!",private="If you want others to see your feedback")
-    async def feedback(self,ctx:Union[Context,discord.Interaction],*,feedback,private:Optional[bool]=True):
+    async def feedback(self,ctx:Context|discord.Interaction,*,feedback,private:bool=True):
         '''Any kind of feedback or questions are accepted. Even any concerns regarding the bot.'''
         if len(feedback)>1024:
             return await ctx.send("Please limit your feedback to 1024 characters or less")
@@ -128,6 +128,8 @@ class Misc(commands.Cog):
     async def before_presence(self):
         print('waiting to update presence until ready...')
         await self.bot.wait_until_ready()
+    # @hybrid_command(name='command_stats')
+    # async def cmd_stats(self,ctx)
 async def setup(bot):
     await bot.add_cog(Misc(bot))
 

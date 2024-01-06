@@ -123,10 +123,11 @@ async def load_movesets_of_pokemon(pokemon_number,version_name,learn_type_id:str
     if pokemon_moves is None:
         await send_func("Could not find the pokemon's movesets. Maybe the pokemon's moves aren't added yet.",ephemeral=True)
         return None
-    pokemon_moves=pokemon_moves.get(version_name,None)
+    pokemon_moves=pokemon_moves.get(str(version_name),None)
     if pokemon_moves is None:
         await send_func("That Pokemon doesn't exist in that game, or the developer is yet to add the movesets for that Pokemon for that game.",ephemeral=True)
         return None
+    
     if learn_type_id is None:
         return pokemon_moves
     pokemon_moves=pokemon_moves.get(learn_type_id,None)
@@ -243,7 +244,7 @@ async def can_learn(interaction:discord.Interaction,pokemon:str,move_name:int,ga
         return await interaction.response.send_message("Could not find that Pokemon.",ephemeral=True)
     pokemon_info=pokedex_dict[match]
     colour=pokemon_info["color"]
-    name = pokedex_dict["pokemon"]["name"]
+    name = pokedex_dict[pokemon]["name"]
     number = pokedex_dict[pokemon]["num"]
     split_game_name = game_name.lower()
     version_num = initial_dict.get(split_game_name, None)

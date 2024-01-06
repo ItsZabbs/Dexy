@@ -137,6 +137,7 @@ target_dict = {
     13: "User and Allies",
     14: "All Pokemon",
     15: "Previous opponent",
+    16: "Target and Self"
 }
 abil_rating_dict = {
     -3: "Absolute Trash",
