@@ -257,12 +257,12 @@ async def can_learn(interaction:discord.Interaction,pokemon:str,move_name:int,ga
     else:
         split_game_name=list(version_dict.keys())[list(version_dict.values()).index(version_num)].split("-")
     pokemon_moveset=deepcopy(movesets[str(number)].get(str(version_num),None))
-    pokemon_moveset=load_movesets_of_pokemon(str(number),str(version_num),None,interaction)
+    pokemon_moveset=await load_movesets_of_pokemon(str(number),str(version_num),None,interaction)
     if pokemon_moveset is None:
         return await interaction.response.send_message("Could not find that pokemon's movesets.",ephemeral=True)
     assert isinstance(pokemon_moveset,dict)
     if pokemon_moveset['1'][0].get("level",None) is None:
-        pokemon_moveset=load_movesets_of_pokemon(number,str(int(version_num)-1),None,interaction)
+        pokemon_moveset=await load_movesets_of_pokemon(number,str(int(version_num)-1),None,interaction)
     if pokemon_moveset is None:
         return await interaction.response.send_message(f"{pokemon.capitalize} didn't exist in {game_name}!",ephemeral=True)
     assert isinstance(pokemon_moveset,dict)
