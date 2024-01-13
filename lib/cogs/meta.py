@@ -2,13 +2,17 @@ import copy
 from datetime import datetime, timedelta
 from platform import python_version
 from time import time
-from typing import Union, Optional
+from typing import Union, Optional,Literal
+import re
 
 import discord
 from discord import Activity, ActivityType
 from discord.ext import tasks
 from discord.ext.commands import Context,CommandInvokeError,Cog,command,CheckFailure
 from psutil import Process, virtual_memory
+from bs4 import BeautifulSoup
+import aiohttp
+import ujson
 
 from ..db import db
 from lib.bot import Bot
@@ -24,6 +28,20 @@ class Meta(Cog):
         if ctx.command.name=="stats":
             return True
         return ctx.author.id==650664682046226432
+    @command(name='updatesprites')
+    async def update_sprite_lists(self,ctx:Context,sprite_type:Literal['bw','ani']):
+        url=f"https://play.pokemonshowdown.com/sprites/{sprite_type if sprite_type=='ani' else 'gen5'}/"
+        async with aiohttp.ClientSession() as cs:
+            async with cs.get(f'http://play.pokemonshowdown.com/sprites/{"gen5" if sprite_type=="bw" else "ani"}/') as res:
+                html=await res.text()
+        bsparser=BeautifulSoup(html,features="html.parser")
+        text=bsparser.get_text()
+        pokemon=re.findall(f"([a-z-.]+).{'png' if sprite_type=='bw' else 'gif'}",text)
+        file=f"lib/cogs/pokedexdata/pokemon_names{'_ani' if sprite_type=='ani' else ''}.json"
+        with open(file,'w',encoding='utf-8') as new_names:
+            ujson.dump(pokemon,new_names)
+        await ctx.message.add_reaction('\N{THUMBS UP SIGN}')
+
     @command(name='leaveguild')
     async def leaveguild(self,ctx,GuildID:Optional[discord.Guild]):
         if GuildID is None:GuildID=self.bot.get_guild(ctx.guild.id)
@@ -151,7 +169,7 @@ class Meta(Cog):
         '''Shows the bot's stats'''
         embed = discord.Embed(title="Bot stats",
                               colour=ctx.author.colour,
-                              timestamp=datetime.utcnow())
+                              timestamp=datetime.now())
         assert self.bot.user is not None and self.bot.user.avatar is not None
         embed.set_thumbnail(url=self.bot.user.avatar.url)
 
