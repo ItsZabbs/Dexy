@@ -483,8 +483,7 @@ async def convert_four_baseurl(
 
 class Pokemon(commands.Cog):
     """All of the Pokemon related commands"""
-
-    extracommands: List
+    extracommands:List=[]
     url = "pokemon-related-commands"
 
 
@@ -1248,11 +1247,11 @@ class Pokemon(commands.Cog):
         ...
 
     @commands.command(
-        name="comparestats",
-        aliases=["comp_stat", "stats_diff", "cstats", "compstat"],
-        hidden=True,
+        name="compstats",
+        aliases=["comp_stat", "stats_diff", "cstats", "compstat"]
     )
     async def compare_stats(self, ctx: commands.Context, *pokemon: str):
+        """Compare the stats of 2 or more Pokemon. Limited to 10 Pokemon only."""
         embed = discord.Embed(title="Stats comparison")
         not_found = []
         new_list = []
@@ -1353,7 +1352,7 @@ class Pokemon(commands.Cog):
     def cog_load(self) -> None:
         if (moveset_command := self.bot.get_command("moveset")) is not None:
             setattr(moveset_command, "helpcog", self)
-        if not hasattr(self, "extracommands") or not self.extracommands:
+        if not hasattr(self, "extracommands") or not self.extracommands and moveset_command is not None:
             self.extracommands = [moveset_command]
 
 

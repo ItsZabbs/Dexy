@@ -182,22 +182,22 @@ class Events(commands.Cog):
             f"Guilds added today: {self.guild_log['Added']}\nGuilds removed today: {self.guild_log['Left']}"
         )
         self.guild_log.update({"Added": 0, "Left": 0})
-    @commands.Cog.listener('on_command_completion')
-    async def on_ext_command_completion(self,ctx:commands.Context):
-        assert ctx.command is not None
-        await self.command_stats(ctx.command.name,ctx.message.id)
+    # @commands.Cog.listener('on_command_completion')
+    # async def on_ext_command_completion(self,ctx:commands.Context):
+    #     assert ctx.command is not None
+    #     await self.command_stats(ctx.command.name,ctx.message.id)
 
-    @commands.Cog.listener('on_app_command_completion')
-    async def on_app_command_completion(self,interaction:discord.Interaction,command:discord.app_commands.Command):
-        await self.command_stats(command.name,interaction.id)
+    # @commands.Cog.listener('on_app_command_completion')
+    # async def on_app_command_completion(self,interaction:discord.Interaction,command:discord.app_commands.Command):
+    #     await self.command_stats(command.name,interaction.id)
 
-    async def command_stats(self,cmdname:str,cmdid:int):
-        async with self.bot.pool.acquire() as conn:
-            import asyncpg
-            conn:asyncpg.Connection
-            record:list[asyncpg.Record]=await conn.fetch("SELECT usage,memusage from cmdstats where cmdname=$1",cmdname)
-            if not record:return
-            await conn.execute("update cmdstats set usage=usage+1 where cmdname=$1",cmdname)
+    # async def command_stats(self,cmdname:str,cmdid:int):
+    #     async with self.bot.pool.acquire() as conn:
+    #         import asyncpg
+    #         conn:asyncpg.Connection
+    #         record:list[asyncpg.Record]=await conn.fetch("SELECT usage,memusage from cmdstats where cmdname=$1",cmdname)
+    #         if not record:return
+    #         await conn.execute("update cmdstats set usage=usage+1 where cmdname=$1",cmdname)
 
 async def setup(bot: Bot):
     await bot.add_cog(Events(bot))

@@ -68,7 +68,7 @@ class Bot(commands.AutoShardedBot):
         self.feedback_webhook=await self.fetch_webhook(int(feedback_webhook))
         self.guild_webhook=await self.fetch_webhook(int(guild_webhook))
         self.command_webhook=await self.fetch_webhook(int(command_webhook))
-        for ext in os.listdir("./lib/cogs"): #temp fix to let moveset load after pokemon is loaded
+        for ext in sorted(os.listdir("./lib/cogs"),reverse=True): #temp fix to let moveset load after pokemon is loaded
             if ext.endswith(".py") and not ext.startswith("_"):
                 try:
                     await self.load_extension(f"lib.cogs.{ext[:-3]}")

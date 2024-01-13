@@ -5,17 +5,18 @@ from discord import app_commands
 from discord.ext.commands import parameter
 import discord
 import difflib
-from copy import copy,deepcopy
+from copy import copy, deepcopy
 from typing import Dict, List
 
-from .pokemon import Pokemon,moveid_dict, pokedex_dict, add_info_to_embed,serebii
+from .pokemon import Pokemon, moveid_dict, pokedex_dict, add_info_to_embed, serebii
 
 from lib.cogs.utils import load_files_into_variable
 from lib.cogs.utils.autocomplete import pokemon_autocomplete
-from lib.cogs.utils.converters import PokemonConverter,get_close_matches
-inverse_moveid_dict:Dict[str,int]={}
-for k,v in moveid_dict.items():
-    inverse_moveid_dict[v]=k
+from lib.cogs.utils.converters import PokemonConverter, get_close_matches
+
+inverse_moveid_dict: Dict[str, int] = {}
+for k, v in moveid_dict.items():
+    inverse_moveid_dict[v] = k
 version_names = [
     "Red, Blue",
     "Yellow",
@@ -39,7 +40,7 @@ version_names = [
     "Sword, Shield",
     "Brilliant Diamond, Shining Pearl",
     "Legends Arceus",
-    "Scarlet, Violet"
+    "Scarlet, Violet",
 ]
 learn_list = {
     "level-up": {"id": 1},
@@ -55,8 +56,19 @@ learn_list = {
     "form-change": {"id": 10},
     "zygarde-cube": {"id": 11},
 }
-learn_list_better = {1: 'Level Up', 2: 'Egg', 3: 'Tutor', 4: 'Technical Machine', 5: 'Stadium Surfing Pikachu',
-                     6: 'Light Ball Egg', 7: 'Colosseum Purification', 8: 'Xd Shadow', 9: 'Xd Purification', 10: 'Form Change', 11: 'Zygarde Cube'}
+learn_list_better = {
+    1: "Level Up",
+    2: "Egg",
+    3: "Tutor",
+    4: "Technical Machine",
+    5: "Stadium Surfing Pikachu",
+    6: "Light Ball Egg",
+    7: "Colosseum Purification",
+    8: "Xd Shadow",
+    9: "Xd Purification",
+    10: "Form Change",
+    11: "Zygarde Cube",
+}
 version_dict = {
     "red-blue": "1",
     "yellow": "2",
@@ -80,7 +92,7 @@ version_dict = {
     "sword-shield": "20",
     "brilliant diamond-shining pearl": "21",
     "legends arceus": "99",
-    "scarlet-violet":"22"
+    "scarlet-violet": "22",
 }
 initial_dict = {
     "rb": "1",
@@ -106,35 +118,58 @@ initial_dict = {
     "swsh": "20",
     "bdsp": "21",
     "pla": "99",
-    "sv":"22"
+    "sv": "22",
 }
 
-movesets:Dict[str,Dict[str,Dict[str,List[Dict[str,int]]]]]=load_files_into_variable("lib/cogs/pokedexdata/movesets.json")
-PokedexConverter=PokemonConverter(list(pokedex_dict.keys()),True)
+movesets: Dict[
+    str, Dict[str, Dict[str, List[Dict[str, int]]]]
+] = load_files_into_variable("lib/cogs/pokedexdata/movesets.json")
+PokedexConverter = PokemonConverter(list(pokedex_dict.keys()), True)
+
+
 def with_cog(cog: commands.Cog):
     def inner(command: commands.Command):
-        command.extras = {'helpcog':cog}
+        command.extras = {"helpcog": cog}
         return command
 
     return inner
-async def load_movesets_of_pokemon(pokemon_number,version_name,learn_type_id:str|None,ctx:commands.Context|discord.Interaction):
-    pokemon_moves=movesets.get(str(pokemon_number),None)
-    send_func=ctx.response.send_message if isinstance(ctx,discord.Interaction) else ctx.send
+
+
+async def load_movesets_of_pokemon(
+    pokemon_number,
+    version_name,
+    learn_type_id: str | None,
+    ctx: commands.Context | discord.Interaction,
+):
+    pokemon_moves = movesets.get(str(pokemon_number), None)
+    send_func = (
+        ctx.response.send_message if isinstance(ctx, discord.Interaction) else ctx.send
+    )
     if pokemon_moves is None:
-        await send_func("Could not find the pokemon's movesets. Maybe the pokemon's moves aren't added yet.",ephemeral=True)
+        await send_func(
+            "Could not find the pokemon's movesets. Maybe the pokemon's moves aren't added yet.",
+            ephemeral=True,
+        )
         return None
-    pokemon_moves=pokemon_moves.get(str(version_name),None)
+    pokemon_moves = pokemon_moves.get(str(version_name), None)
     if pokemon_moves is None:
-        await send_func("That Pokemon doesn't exist in that game, or the developer is yet to add the movesets for that Pokemon for that game.",ephemeral=True)
+        await send_func(
+            "That Pokemon doesn't exist in that game, or the developer is yet to add the movesets for that Pokemon for that game.",
+            ephemeral=True,
+        )
         return None
-    
+
     if learn_type_id is None:
         return pokemon_moves
-    pokemon_moves=pokemon_moves.get(learn_type_id,None)
+    pokemon_moves = pokemon_moves.get(learn_type_id, None)
     if pokemon_moves is None:
-        await send_func("That Pokemon doesn't learn any moves through that learn method.",ephemeral=True)
+        await send_func(
+            "That Pokemon doesn't learn any moves through that learn method.",
+            ephemeral=True,
+        )
         return None
     return pokemon_moves
+
 
 # @with_cog(Pokemon)
 @commands.hybrid_command(name="moveset", extras={"url": "movesets"})
@@ -146,7 +181,9 @@ async def load_movesets_of_pokemon(pokemon_number,version_name,learn_type_id:str
 )
 async def moveset(
     ctx: commands.Context,
-    pokemon: PokedexConverter = parameter(description="The Pokemon you want to see the moveset of."), #type:ignore
+    pokemon: PokedexConverter = parameter(
+        description="The Pokemon you want to see the moveset of."
+    ),  # type:ignore
     game_name: str = parameter(
         description="The name of the game. Eg. Omega Ruby or use initials like ORAS"
     ),
@@ -160,40 +197,48 @@ async def moveset(
     ),
 ):
     """Sends the pokemon's moveset in the requested game. See [prefix]help moveset for more info"""
-    pokemon_info=pokedex_dict[pokemon]
+    pokemon_info = pokedex_dict[pokemon]
     colour = pokemon_info["color"]
     name = pokemon_info["name"]
     number = pokemon_info["num"]
-    url=pokemon_info.get("url","")
+    url = pokemon_info.get("url", "")
     game_name = game_name.lower()
     version_name = initial_dict.get(game_name, None)
     if version_name is None:
-        version_name = get_close_matches(game_name, version_dict.keys(),cutoff=0.3)
+        version_name = get_close_matches(game_name, version_dict.keys(), cutoff=0.3)
         if version_name is None:
             raise KeyError("I couldn't find the game you're looking for...")
         split_game_name = version_name.split("-")
         version_num = version_dict[version_name]
     else:
-        split_game_name=list(version_dict.keys())[list(version_dict.values()).index(version_name)].split("-")
+        split_game_name = list(version_dict.keys())[
+            list(version_dict.values()).index(version_name)
+        ].split("-")
     learn_type_id = get_close_matches(learn_type, learn_list.keys(), cutoff=0.1)
     if learn_type_id is None:
         raise KeyError("I couldn't find the move learning method you're looking for...")
     movemethod = learn_type_id
     learn_type_id = str(learn_list[learn_type_id]["id"])
-    pokemon_moves=await load_movesets_of_pokemon(number,version_name,learn_type_id,ctx)
+    pokemon_moves = await load_movesets_of_pokemon(
+        number, version_name, learn_type_id, ctx
+    )
     if pokemon_moves is None:
         return
-    assert isinstance(pokemon_moves,list)
-    if pokemon_moves[0].get("level", None) is None and version_name!="99": #Fix for movesets that are common amongst generations.Eg. Movesets for R,S are available in Emerald only.
-        pokemon_moves=await load_movesets_of_pokemon(number,str(int(version_name)-1),learn_type_id,ctx)
+    assert isinstance(pokemon_moves, list)
+    if (
+        pokemon_moves[0].get("level", None) is None and version_name != "99"
+    ):  # Fix for movesets that are common amongst generations.Eg. Movesets for R,S are available in Emerald only.
+        pokemon_moves = await load_movesets_of_pokemon(
+            number, str(int(version_name) - 1), learn_type_id, ctx
+        )
     if pokemon_moves is None:
         return
-    assert isinstance(pokemon_moves,list)
+    assert isinstance(pokemon_moves, list)
     bylevel = {}
-    for d in sorted(pokemon_moves,key=lambda x:x.get('level',1)):
+    for d in sorted(pokemon_moves, key=lambda x: x.get("level", 1)):
         level = d.get("level", "N/A")
-        ls = bylevel.get(level, [])    
-        ls.append([{k:v} for k,v in d.items() if k!="level"][0])
+        ls = bylevel.get(level, [])
+        ls.append([{k: v} for k, v in d.items() if k != "level"][0])
         bylevel.update({level: ls})
     colour = discord.Color.from_rgb(*colour)
     embed = discord.Embed(
@@ -209,7 +254,7 @@ async def moveset(
             )
             name = f"Level {k}" if k != 0 else "Level N/A"
         embed.add_field(name=name, value=", ".join(n), inline=False)
-    embed.set_thumbnail(url=serebii+url)
+    embed.set_thumbnail(url=serebii + url)
     embed = await add_info_to_embed(ctx, embed)
     return await ctx.send(embed=embed, ephemeral=private)
 
@@ -236,48 +281,90 @@ async def moveset_learntype_auto(interaction, current):
         for e in learn_list.keys()
         if current.lower() in e.lower()
     ][:25]
-@app_commands.describe(pokemon="The pokemon whose learnset you want to check",move_name="The move you want to check for",game_name="The game whose moveset should be selected",private="If you want to invoke this command privately")
-@app_commands.command(name="can_learn",description="Check if a pokemon learns a move")
-async def can_learn(interaction:discord.Interaction,pokemon:str,move_name:int,game_name:str,private:bool=False):
-    match=get_close_matches(pokemon,pokedex_dict.keys()) 
+
+
+@app_commands.describe(
+    pokemon="The pokemon whose learnset you want to check",
+    move_name="The move you want to check for",
+    game_name="The game whose moveset should be selected",
+    private="If you want to invoke this command privately",
+)
+@app_commands.command(name="can_learn", description="Check if a pokemon learns a move")
+async def can_learn(
+    interaction: discord.Interaction,
+    pokemon: str,
+    move_name: int,
+    game_name: str,
+    private: bool = False,
+):
+    match = get_close_matches(pokemon, pokedex_dict.keys())
     if match is None:
-        return await interaction.response.send_message("Could not find that Pokemon.",ephemeral=True)
-    pokemon_info=pokedex_dict[match]
-    colour=pokemon_info["color"]
+        return await interaction.response.send_message(
+            "Could not find that Pokemon.", ephemeral=True
+        )
+    pokemon_info = pokedex_dict[match]
+    colour = pokemon_info["color"]
     name = pokedex_dict[pokemon]["name"]
     number = pokedex_dict[pokemon]["num"]
     split_game_name = game_name.lower()
     version_num = initial_dict.get(split_game_name, None)
     if version_num is None:
-        version_num=get_close_matches(split_game_name,version_dict.keys(),cutoff=0.3)
+        version_num = get_close_matches(
+            split_game_name, version_dict.keys(), cutoff=0.3
+        )
         if version_num is None:
             raise KeyError("I couldn't find the game you're looking for...")
         split_game_name = version_num.split("-")
         version_num = version_dict[version_num]
     else:
-        split_game_name=list(version_dict.keys())[list(version_dict.values()).index(version_num)].split("-")
-    pokemon_moveset=deepcopy(movesets[str(number)].get(str(version_num),None))
-    pokemon_moveset=await load_movesets_of_pokemon(str(number),str(version_num),None,interaction)
+        split_game_name = list(version_dict.keys())[
+            list(version_dict.values()).index(version_num)
+        ].split("-")
+    pokemon_moveset = deepcopy(movesets[str(number)].get(str(version_num), None))
+    pokemon_moveset = await load_movesets_of_pokemon(
+        str(number), str(version_num), None, interaction
+    )
     if pokemon_moveset is None:
-        return await interaction.response.send_message("Could not find that pokemon's movesets.",ephemeral=True)
-    assert isinstance(pokemon_moveset,dict)
-    if pokemon_moveset['1'][0].get("level",None) is None:
-        pokemon_moveset=await load_movesets_of_pokemon(number,str(int(version_num)-1),None,interaction)
+        return await interaction.response.send_message(
+            "Could not find that pokemon's movesets.", ephemeral=True
+        )
+    assert isinstance(pokemon_moveset, dict)
+    if pokemon_moveset["1"][0].get("level", None) is None:
+        pokemon_moveset = await load_movesets_of_pokemon(
+            number, str(int(version_num) - 1), None, interaction
+        )
     if pokemon_moveset is None:
-        return await interaction.response.send_message(f"{pokemon.capitalize} didn't exist in {game_name}!",ephemeral=True)
-    assert isinstance(pokemon_moveset,dict)
-    all_learn_list=[]
-    for k,v in pokemon_moveset.items():
-        if move_name in (d:=[move['move_id'] for move in v]):
-            temp=learn_list_better[int(k)]
-            anothertemp=v[d.index(move_name)].get('level',0)
-            all_learn_list.append((temp,anothertemp))
-    final_move_name=" ".join([e.capitalize() for e in moveid_dict[move_name].split("-")])
+        return await interaction.response.send_message(
+            f"{pokemon.capitalize} didn't exist in {game_name}!", ephemeral=True
+        )
+    assert isinstance(pokemon_moveset, dict)
+    all_learn_list = []
+    for k, v in pokemon_moveset.items():
+        if move_name in (d := [move["move_id"] for move in v]):
+            temp = learn_list_better[int(k)]
+            anothertemp = v[d.index(move_name)].get("level", 0)
+            all_learn_list.append((temp, anothertemp))
+    final_move_name = " ".join(
+        [e.capitalize() for e in moveid_dict[move_name].split("-")]
+    )
     if all_learn_list:
-        n='\n'.join(["Method: "+i[0]+('; Level learnt at: '+str(i[1]) if i[1] else '') for i in all_learn_list])
-        await interaction.response.send_message(f"{pokemon.capitalize()} learns {final_move_name} in these way(s):\n{n}",ephemeral=private)
+        n = "\n".join(
+            [
+                "Method: " + i[0] + ("; Level learnt at: " + str(i[1]) if i[1] else "")
+                for i in all_learn_list
+            ]
+        )
+        await interaction.response.send_message(
+            f"{pokemon.capitalize()} learns {final_move_name} in these way(s):\n{n}",
+            ephemeral=private,
+        )
     else:
-        await interaction.response.send_message(f"{pokemon.capitalize()} does not learn {final_move_name} in any way.",ephemeral=private)
+        await interaction.response.send_message(
+            f"{pokemon.capitalize()} does not learn {final_move_name} in any way.",
+            ephemeral=private,
+        )
+
+
 @can_learn.autocomplete("pokemon")
 @pokemon_autocomplete
 async def can_learn_pokemon_auto(interaction, current):
@@ -291,16 +378,22 @@ async def can_learn_gamename_auto(interaction, current):
         for e in version_names
         if current.lower() in e.lower()
     ][:25]
+
+
 @can_learn.autocomplete("move_name")
-async def can_learn_move_name_auto(interaction,current):
+async def can_learn_move_name_auto(interaction, current):
     return [
-        app_commands.Choice(name=" ".join([e.capitalize() for e in k.split("-")]),value=v)
-        for k,v in inverse_moveid_dict.items()
-        if current.lower().replace(" ","-") in k
+        app_commands.Choice(
+            name=" ".join([e.capitalize() for e in k.split("-")]), value=v
+        )
+        for k, v in inverse_moveid_dict.items()
+        if current.lower().replace(" ", "-") in k
     ][:25]
+
+
 async def setup(bot: Bot):
     # moveset.callback=moveset
     bot.add_command(moveset)
     bot.tree.add_command(can_learn)
-    moveset.extras['helpcog'] = bot.cogs["Pokemon"]
+    moveset.extras["helpcog"] = bot.cogs["Pokemon"]
     Pokemon.extracommands = [moveset]
