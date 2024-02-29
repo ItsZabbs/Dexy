@@ -73,7 +73,7 @@ else:
                     return SpritePokemon(back,shiny,sprite_type,random.choice(pokemon_names))
                 if pokemon not in pokemon_names_ani and sprite_type=="none" and pokemon in pokemon_names:
                     raise BadArgument(f"That Pokemon only has a bw sprite. Try `{pokemon} bw{' back' if back else ''}{' shiny' if shiny else ''}` instead.")
-                if pokemon not in pokemon_names:
+                if pokemon not in pokemon_names and pokemon not in pokemon_names_ani:
                     raise BadArgument("Could not find that Pokemon."+(f" Were you looking for `{name}`" if (name:=get_close_matches(pokemon,pokemon_names)) is not None else ""))
                 else:
                     return SpritePokemon(back,shiny,sprite_type,pokemon)
