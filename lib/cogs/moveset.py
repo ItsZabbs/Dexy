@@ -290,27 +290,10 @@ async def can_learn(
         return await interaction.response.send_message(
             "Could not find that Pokemon.", ephemeral=True
         )
-    pokemon_info = pokedex_dict[match]
-    colour = pokemon_info["color"]
-    name = pokedex_dict[pokemon]["name"]
     number = pokedex_dict[pokemon]["num"]
-    split_game_name = game_name.lower()
-    version_num = initial_dict.get(split_game_name, None)
-    if version_num is None:
-        version_num = get_close_matches(
-            split_game_name, version_dict.keys(), cutoff=0.3
-        )
-        if version_num is None:
-            raise KeyError("I couldn't find the game you're looking for...")
-        split_game_name = version_num.split("-")
-        version_num = version_dict[version_num]
-    else:
-        split_game_name = list(version_dict.keys())[
-            list(version_dict.values()).index(version_num)
-        ].split("-")
-    pokemon_moveset = deepcopy(movesets[str(number)].get(str(version_num), None))
+    pokemon_moveset = deepcopy(movesets[str(number)].get(game_name, None))
     pokemon_moveset = await load_movesets_of_pokemon(
-        str(number), str(version_num), None, interaction
+        str(number), game_name, None, interaction
     )
     if pokemon_moveset is None:
         return await interaction.response.send_message(
@@ -319,7 +302,7 @@ async def can_learn(
     assert isinstance(pokemon_moveset, dict)
     if pokemon_moveset["1"][0].get("level", None) is None:
         pokemon_moveset = await load_movesets_of_pokemon(
-            number, str(int(version_num) - 1), None, interaction
+            number, str(int(game_name) - 1), None, interaction
         )
     if pokemon_moveset is None:
         return await interaction.response.send_message(
@@ -362,9 +345,9 @@ async def can_learn_pokemon_auto(interaction, current):
 @can_learn.autocomplete("game_name")
 async def can_learn_gamename_auto(interaction, current):
     return [
-        app_commands.Choice(name=e, value=e)
-        for e in version_names
-        if current.lower() in e.lower()
+        app_commands.Choice(name=v, value=k)
+        for k,v in version_names.items()
+        if current.lower() in v.lower()
     ][:25]
 
 
