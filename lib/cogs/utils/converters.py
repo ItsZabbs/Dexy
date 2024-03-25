@@ -33,9 +33,28 @@ if TYPE_CHECKING:
             ...
         async def convert(self,ctx:Context[Bot],argument:str)->str:
             ...
+    class GameNameConverter(Converter):
+        def __init__(self, initial_names:Dict[str,str],code_names:Dict[str,str]):
+            ...
+        async def convert(self,ctx:Context[Bot],argument:str)->str:
+            ...
     SpriteConverter=Tuple[bool,bool,str,str]
     CustomConverter=str
 else:
+    class GameNameConverter(Converter):
+        def __init__(self,initial_names:Dict[str,str],code_names:Dict[str,str]):
+            self.initial_names=initial_names
+            self.code_names=code_names
+        async def convert(self, ctx:Context[Bot], argument:str)-> str:
+            if argument.isdigit():
+                return argument
+            argument=argument.lower()
+            if argument in self.initial_names:
+                return self.initial_names[argument]
+            argument=get_close_matches(argument,self.code_names)
+            if argument is not None:
+                return self.code_names[argument]
+            raise KeyError("I couldn't match the game name to any version.")
     class PokemonConverter(Converter):
         def __init__(self,names:List[str],closematch:bool=True,) -> None:
             super().__init__()

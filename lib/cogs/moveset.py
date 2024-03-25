@@ -4,44 +4,43 @@ from discord.ext import commands
 from discord import app_commands
 from discord.ext.commands import parameter
 import discord
-import difflib
-from copy import copy, deepcopy
+from copy import deepcopy
 from typing import Dict, List
 
 from .pokemon import Pokemon, moveid_dict, pokedex_dict, add_info_to_embed, serebii
 
 from lib.cogs.utils import load_files_into_variable
 from lib.cogs.utils.autocomplete import pokemon_autocomplete
-from lib.cogs.utils.converters import PokemonConverter, get_close_matches
+from lib.cogs.utils.converters import PokemonConverter, GameNameConverter, get_close_matches
 
 inverse_moveid_dict: Dict[str, int] = {}
 for k, v in moveid_dict.items():
     inverse_moveid_dict[v] = k
-version_names = [
-    "Red, Blue",
-    "Yellow",
-    "Gold, Silver",
-    "Crystal",
-    "Ruby, Sapphire",
-    "Emerald",
-    "Firered, Leafgreen",
-    "Diamond, Pearl",
-    "Platinum",
-    "Heartgold, Soulsilver",
-    "Black, White",
-    "Colosseum",
-    "Xd",
-    "Black 2, White 2",
-    "X, Y",
-    "Omega Ruby, Alpha Sapphire",
-    "Sun, Moon",
-    "Ultra Sun, Ultra Moon",
-    "Lets Go Pikachu, Lets Go Eevee",
-    "Sword, Shield",
-    "Brilliant Diamond, Shining Pearl",
-    "Legends Arceus",
-    "Scarlet, Violet",
-]
+version_names = {
+    "1":"Red, Blue",
+    "2":"Yellow",
+    "3":"Gold, Silver",
+    "4":"Crystal",
+    "5":"Ruby, Sapphire",
+    "6":"Emerald",
+    "7":"Firered, Leafgreen",
+    "8":"Diamond, Pearl",
+    "9":"Platinum",
+    "10":"Heartgold, Soulsilver",
+    "11":"Black, White",
+    "12":"Colosseum",
+    "13":"XD",
+    "14":"Black 2, White 2",
+    "15":"X, Y",
+    "16":"Omega Ruby, Alpha Sapphire",
+    "17":"Sun, Moon",
+    "18":"Ultra Sun, Ultra Moon",
+    "19":"Lets Go Pikachu, Lets Go Eevee",
+    "20":"Sword, Shield",
+    "21":"Brilliant Diamond, Shining Pearl",
+    "99":"Legends Arceus",
+    "22":"Scarlet, Violet",
+}
 learn_list = {
     "level-up": {"id": 1},
     "egg": {"id": 2},
@@ -125,7 +124,7 @@ movesets: Dict[
     str, Dict[str, Dict[str, List[Dict[str, int]]]]
 ] = load_files_into_variable("lib/cogs/pokedexdata/movesets.json")
 PokedexConverter = PokemonConverter(list(pokedex_dict.keys()), True)
-
+GameNameConverter = GameNameConverter(initial_dict,version_dict)
 
 def with_cog(cog: commands.Cog):
     def inner(command: commands.Command):
@@ -181,10 +180,10 @@ async def load_movesets_of_pokemon(
 )
 async def moveset(
     ctx: commands.Context,
-    pokemon: PokedexConverter = parameter(
+    pokemon: PokedexConverter = parameter( #type:ignore
         description="The Pokemon you want to see the moveset of."
     ),  # type:ignore
-    game_name: str = parameter(
+    game_name: GameNameConverter = parameter( # type:ignore
         description="The name of the game. Eg. Omega Ruby or use initials like ORAS"
     ),
     learn_type: str = parameter(
@@ -198,38 +197,27 @@ async def moveset(
 ):
     """Sends the pokemon's moveset in the requested game. See [prefix]help moveset for more info"""
     pokemon_info = pokedex_dict[pokemon]
+    print(game_name)
     colour = pokemon_info["color"]
     name = pokemon_info["name"]
     number = pokemon_info["num"]
     url = pokemon_info.get("url", "")
-    game_name = game_name.lower()
-    version_name = initial_dict.get(game_name, None)
-    if version_name is None:
-        version_name = get_close_matches(game_name, version_dict.keys(), cutoff=0.3)
-        if version_name is None:
-            raise KeyError("I couldn't find the game you're looking for...")
-        split_game_name = version_name.split("-")
-        version_num = version_dict[version_name]
-    else:
-        split_game_name = list(version_dict.keys())[
-            list(version_dict.values()).index(version_name)
-        ].split("-")
     learn_type_id = get_close_matches(learn_type, learn_list.keys(), cutoff=0.1)
     if learn_type_id is None:
         raise KeyError("I couldn't find the move learning method you're looking for...")
     movemethod = learn_type_id
     learn_type_id = str(learn_list[learn_type_id]["id"])
     pokemon_moves = await load_movesets_of_pokemon(
-        number, version_name, learn_type_id, ctx
+        number, game_name, learn_type_id, ctx
     )
     if pokemon_moves is None:
         return
     assert isinstance(pokemon_moves, list)
     if (
-        pokemon_moves[0].get("level", None) is None and version_name != "99"
+        pokemon_moves[0].get("level", None) is None and game_name != "99"
     ):  # Fix for movesets that are common amongst generations.Eg. Movesets for R,S are available in Emerald only.
         pokemon_moves = await load_movesets_of_pokemon(
-            number, str(int(version_name) - 1), learn_type_id, ctx
+            number, str(int(game_name) - 1), learn_type_id, ctx
         )
     if pokemon_moves is None:
         return
@@ -243,7 +231,7 @@ async def moveset(
     colour = discord.Color.from_rgb(*colour)
     embed = discord.Embed(
         title=name.capitalize(),
-        description=f'Move method - {" ".join([e.capitalize() for e in movemethod.split("-")])} \nGame - {", ".join(e.capitalize() if len(e.split())==0 else " ".join([i.capitalize() for i in e.split(" ")]) for e in split_game_name)}',
+        description=f'Move method - {" ".join([e.capitalize() for e in movemethod.split("-")])} \nGame - {version_names[game_name]}',
         colour=colour,
     )
     for k, v in bylevel.items():
@@ -268,9 +256,9 @@ async def moveset_pokemon_auto(interaction, current):
 @moveset.autocomplete("game_name")
 async def moveset_gamename_auto(interaction, current):
     return [
-        app_commands.Choice(name=e, value=e)
-        for e in version_names
-        if current.lower() in e.lower()
+        app_commands.Choice(name=v, value=k)
+        for k,v in version_names.items()
+        if current.lower() in v.lower()
     ][:25]
 
 
