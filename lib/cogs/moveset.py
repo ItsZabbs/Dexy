@@ -362,9 +362,9 @@ async def can_learn_pokemon_auto(interaction, current):
 @can_learn.autocomplete("game_name")
 async def can_learn_gamename_auto(interaction, current):
     return [
-        app_commands.Choice(name=e, value=e)
-        for e in version_names
-        if current.lower() in e.lower()
+        app_commands.Choice(name=v, value=k)
+        for k,v in version_names.items()
+        if current.lower() in v.lower()
     ][:25]
 
 
