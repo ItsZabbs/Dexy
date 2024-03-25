@@ -282,15 +282,16 @@ async def can_learn(
     interaction: discord.Interaction,
     pokemon: str,
     move_name: int,
-    game_name: GameNameConverter, #type:ignore
+    game_name: str, #type:ignore
     private: bool = False,
-):
+):  
+    game_name=await GameNameConverter.convert(interaction,game_name)
     match = get_close_matches(pokemon, pokedex_dict.keys())
     if match is None:
         return await interaction.response.send_message(
             "Could not find that Pokemon.", ephemeral=True
         )
-    number = pokedex_dict[pokemon]["num"]
+    number = pokedex_dict[match]["num"]
     pokemon_moveset = deepcopy(movesets[str(number)].get(game_name, None))
     pokemon_moveset = await load_movesets_of_pokemon(
         str(number), game_name, None, interaction
