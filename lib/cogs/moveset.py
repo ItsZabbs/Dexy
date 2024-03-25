@@ -282,7 +282,7 @@ async def can_learn(
     interaction: discord.Interaction,
     pokemon: str,
     move_name: int,
-    game_name: str,
+    game_name: GameNameConverter, #type:ignore
     private: bool = False,
 ):
     match = get_close_matches(pokemon, pokedex_dict.keys())
