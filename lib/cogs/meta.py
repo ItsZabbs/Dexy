@@ -36,7 +36,7 @@ class Meta(Cog):
                 html=await res.text()
         bsparser=BeautifulSoup(html,features="html.parser")
         text=bsparser.get_text()
-        pokemon=re.findall(f"([a-z-.]+).{'png' if sprite_type=='bw' else 'gif'}",text)
+        pokemon=re.findall(f"([a-z-.0-9]+).{'png' if sprite_type=='bw' else 'gif'}",text)
         file=f"lib/cogs/pokedexdata/pokemon_names{'_ani' if sprite_type=='ani' else ''}.json"
         with open(file,'w',encoding='utf-8') as new_names:
             ujson.dump(pokemon,new_names)
