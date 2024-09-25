@@ -1,2 +1,2 @@
-# PokedexBot
-Pokedex Bot#9352
+# Dexy
+Dexy#9352
