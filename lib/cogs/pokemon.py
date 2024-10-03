@@ -370,7 +370,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             pass
         if pokemon_dict["num"] <= 0:
             name = (name.replace(" ", "-")).lower()
-            urllist.append(f"[Smogon](https://www.smogon.com/dex/ss/pokemon/{name})")
+            urllist.append(f"[Smogon](https://www.smogon.com/dex/sv/pokemon/{name})")
         else:
             name = name.replace(" ", "_")
             urllist.append(
@@ -379,7 +379,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
             newname = (name.replace("_", "-").replace(".", "")).lower()
             urllist.append(f"[PokemonDB](https://pokemondb.net/pokedex/{newname})")
             urllist.append(
-                f"[Smogon](https://www.smogon.com/dex/ss/pokemon/{newname}/)"
+                f"[Smogon](https://www.smogon.com/dex/sv/pokemon/{newname}/)"
             )
             urllist.append(
                 f"[Serebii](https://www.serebii.net/pokemon/{name.replace('_','').lower()})"
@@ -598,7 +598,7 @@ class Pokemon(commands.Cog):
         hyphenname = name.replace(" ", "-")
         urldict.append(f"[PokemonDB](https://pokemondb.net/ability/{hyphenname})")
         urldict.append(
-            f"[Smogon](https://www.smogon.com/dex/ss/abilities/{hyphenname}/)"
+            f"[Smogon](https://www.smogon.com/dex/sv/abilities/{hyphenname}/)"
         )
         nospacesname = (name.replace(" ", "")).lower()
         urldict.append(
@@ -864,7 +864,7 @@ class Pokemon(commands.Cog):
         )
         urllist.append(f"[PokemonDB](https://pokemondb.net/item/{hyphenlink.lower()})")
         urllist.append(
-            f"[Smogon](https://www.smogon.com/dex/ss/items/{hyphenlink.lower()}/)"
+            f"[Smogon](https://www.smogon.com/dex/sv/items/{hyphenlink.lower()}/)"
         )
         nospacelink = itemname.replace(" ", "")
         urllist.append(
@@ -1057,7 +1057,7 @@ class Pokemon(commands.Cog):
         )
         hyphenname = (name.replace(" ", "-")).lower()
         urllist.append(f"[PokemonDB](https://pokemondb.net/move/{hyphenname})")
-        urllist.append(f"[Smogon](https://www.smogon.com/dex/ss/moves/{hyphenname}/)")
+        urllist.append(f"[Smogon](https://www.smogon.com/dex/sv/moves/{hyphenname}/)")
         flavourmmm = move_dict.get("flavourText", ["Could not find flavour text."])[-1]
         nospacename = (name.replace(" ", "")).lower()
         if (
