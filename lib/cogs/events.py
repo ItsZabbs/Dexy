@@ -144,7 +144,7 @@ class Events(commands.Cog):
             description=err,
             colour=ctx.me.colour if ctx.me.colour.value else discord.Colour.blurple(),
         )
-        value = f'You can check the [wiki](https://ItsZabbs.github.io/Pokedex-Bot{"#"+x if (x:=ctx.command.extras.get("url","").lower()) else ""})\n{"Or you can [join the support server](https://discord.gg/FBFTYp7nnq)" if ctx.guild and ctx.guild.id!=self.bot.rpokemon_guild_id else ""}'
+        value = f'You can check the [wiki](https://ItsZabbs.github.io/Dexy{"#"+x if (x:=ctx.command.extras.get("url","").lower()) else ""})\n{"Or you can [join the support server](https://discord.gg/FBFTYp7nnq)" if ctx.guild and ctx.guild.id!=self.bot.rpokemon_guild_id else ""}'
         embed.add_field(name="Still confused?", value=value)
         view = ErrorView(
             message_link=message.jump_url, feedback_webhook=self.bot.feedback_webhook
