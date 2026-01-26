@@ -358,11 +358,11 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
         )
         height = pokemon_dict["heightm"]
         weight = pokemon_dict["weightkg"]
-        tier = pokemon_dict.get("Tier", None)
+        tier = pokemon_dict.get("tier", None)
         if tier is None:
             tier = pokedex_dict.get(
                 pokemon_dict.get("baseSpecies","").lower().replace("-", ""), {}
-            ).get("Tier", "None")
+            ).get("tier", "None")
         urllist = []
         try:
             name = pokemon_dict["baseSpecies"]
@@ -844,9 +844,8 @@ class Pokemon(commands.Cog):
             return await ctx.send(
                 "You've sent an incorrect spelling or a wrong item name"
             )
-        item_dict = item_stuff_dict[close_itemname]
-        flavour_text_item = item_dict["FlavourText"]
-        sprite = item_dict["sprite"]
+        flavour_text_item = item_stuff_dict[close_itemname]["FlavourText"]
+        sprite = item_stuff_dict[close_itemname]["sprite"]
         embed = discord.Embed(
             title=f"{close_itemname}",
             description=f"{flavour_text_item[-1]}",
@@ -1320,7 +1319,7 @@ class Pokemon(commands.Cog):
                 try:
                     await ctx.invoke(
                         self.sprite,
-                        sprite_name=await self.SpriteConverter.convert(ctx, content),
+                        sprite_name=await self.SpriteConverter.convert(ctx, content), #type:ignore
                     )
                 except commands.BadArgument:
                     pass
@@ -1344,7 +1343,7 @@ class Pokemon(commands.Cog):
                     ctx: commands.Context = await self.bot.get_context(message)
                     await ctx.invoke(
                         self.sprite,
-                        sprite_name=await self.SpriteConverter.convert(ctx, content),
+                        sprite_name=await self.SpriteConverter.convert(ctx, content), #type:ignore
                     )
                 except:
                     pass
