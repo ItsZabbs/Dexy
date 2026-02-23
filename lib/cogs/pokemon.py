@@ -230,7 +230,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
     if pokemon_dict["num"] <= 0:
         dex_num = ""
     else:
-        dex_num = f" #{pokemon_dict['num']}"
+        dex_num = f" #{pokemon_dict['num']:03}"
     name = " ".join(
         n.capitalize() for n in pokemon_dict["name"].replace("-", " ").split()
         )
