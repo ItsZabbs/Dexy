@@ -227,15 +227,20 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
     else:
         Abilities = "Abilities"
     abilities = ", ".join(abilities)
+    if pokemon_dict["num"] <= 0:
+        dex_num = ""
+    else:
+        dex_num = f" #{pokemon_dict['num']}"
+    name = " ".join(
+        n.capitalize() for n in pokemon_dict["name"].replace("-", " ").split()
+        )
+    name = name + dex_num
     if not lite:
         types = ", ".join(pokemon_dict["types"])
         if len(pokemon_dict["types"]) == 1:
             multipleTypes = "Type"
         else:
             multipleTypes = "Types"
-        name = " ".join(
-            n.capitalize() for n in pokemon_dict["name"].replace("-", " ").split()
-        )
         # name:str=name.replace("-"," ")
         # name=" ".join(n.capitalize() for n in name.split())
         colour: Sequence[int] = pokemon_dict["color"]
@@ -251,19 +256,15 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
                 )
             except:
                 dex_entry = ""
-        if pokemon_dict["num"] <= 0:
-            dex_num = ""
-        else:
-            dex_num = f"#{pokemon_dict['num']}"
         if dex_entry != "":
             embed = discord.Embed(
-                title=name + " " + dex_num,
+                title=name,
                 description=f"*{dex_entry}*",
                 colour=discord.Color.from_rgb(*colour),
             )
         # then the next field is the types
         else:
-            embed = discord.Embed(title=name + " " + dex_num, colour=discord.Color.from_rgb(*colour))
+            embed = discord.Embed(title=name, colour=discord.Color.from_rgb(*colour))
         embed.add_field(name=f"**{multipleTypes}**", value=f"{types}", inline=True)
 
         try:
@@ -402,9 +403,7 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
         return embed
     else:
         embed = discord.Embed(
-            title=" ".join(
-                n.capitalize() for n in pokemon_dict["name"].replace("-", " ").split()
-            ),
+            title=name,
             colour=discord.Color.from_rgb(*pokemon_dict["color"])
             if isinstance(pokemon_dict["color"], (list, tuple))
             else discord.Color.blurple(),
