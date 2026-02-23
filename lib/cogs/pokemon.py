@@ -251,15 +251,19 @@ async def get_pokedex_stuff(pokemon_dict, lite=False):
                 )
             except:
                 dex_entry = ""
+        if pokemon_dict["num"] <= 0:
+            dex_num = ""
+        else:
+            dex_num = f"#{pokemon_dict['num']}"
         if dex_entry != "":
             embed = discord.Embed(
-                title=name,
+                title=name + " " + dex_num,
                 description=f"*{dex_entry}*",
                 colour=discord.Color.from_rgb(*colour),
             )
         # then the next field is the types
         else:
-            embed = discord.Embed(title=name, colour=discord.Color.from_rgb(*colour))
+            embed = discord.Embed(title=name + " " + dex_num, colour=discord.Color.from_rgb(*colour))
         embed.add_field(name=f"**{multipleTypes}**", value=f"{types}", inline=True)
 
         try:
