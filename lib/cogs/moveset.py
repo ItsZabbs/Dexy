@@ -39,6 +39,7 @@ version_names = {
     "20":"Sword, Shield",
     "21":"Brilliant Diamond, Shining Pearl",
     "99":"Legends Arceus",
+    "98":"Legends ZA",
     "22":"Scarlet, Violet",
 }
 learn_list = {
@@ -47,26 +48,14 @@ learn_list = {
     "tutor": {"id": 3},
     "tm": {"id": 4},
     "technical machine": {"id": 4},
-    "stadium-surfing-pikachu": {"id": 5},
-    "light-ball-egg": {"id": 6},
-    "colosseum-purification": {"id": 7},
-    "xd-shadow": {"id": 8},
-    "xd-purification": {"id": 9},
     "form-change": {"id": 10},
-    "zygarde-cube": {"id": 11},
 }
 learn_list_better = {
     1: "Level Up",
     2: "Egg",
     3: "Tutor",
     4: "Technical Machine",
-    5: "Stadium Surfing Pikachu",
-    6: "Light Ball Egg",
-    7: "Colosseum Purification",
-    8: "Xd Shadow",
-    9: "Xd Purification",
     10: "Form Change",
-    11: "Zygarde Cube",
 }
 version_dict = {
     "red-blue": "1",
@@ -118,6 +107,7 @@ initial_dict = {
     "swsh": "20",
     "bdsp": "21",
     "pla": "99",
+    "plz": "98",
     "sv": "22",
 }
 
