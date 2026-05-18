@@ -121,7 +121,6 @@ class Bot(commands.AutoShardedBot):
         self.error_webhook=await self.fetch_webhook(int(error_webhook))
         self.feedback_webhook=await self.fetch_webhook(int(feedback_webhook))
         self.guild_webhook=await self.fetch_webhook(int(guild_webhook))
-        self.logs_webhook=await self.fetch_webhook(int(logs_webhook))
         for ext in sorted(os.listdir("./lib/cogs"),reverse=True): #temp fix to let moveset load after pokemon is loaded
             if ext.endswith(".py") and not ext.startswith("_"):
                 try:
@@ -132,7 +131,7 @@ class Bot(commands.AutoShardedBot):
                     print(desired_trace)
                     
         await self.load_extension('jishaku')
-        webhook_logging=WebhookHandler(logs_webhook)
+        webhook_logging=WebhookHandler(logs_webhook, level=logging.INFO)
         discord.utils.setup_logging(handler=webhook_logging)
         self.pool=await db.setup_database()
         
