@@ -1,12 +1,13 @@
-import asyncpg
+import aiohttp
 import discord
-from discord.ext import commands
+from discord.ext import commands,tasks
 import dotenv
 import os
 import traceback
+import asyncio
+
 import logging
-from asyncpg import Connection
-from asyncpg.exceptions import UniqueViolationError
+import datetime
 
 from ..db import db
 
@@ -17,10 +18,10 @@ test_token=os.getenv("TEST_BOT_TOKEN")
 error_webhook = os.getenv("ERROR_WEBHOOK")
 feedback_webhook=os.getenv("FEEDBACK_WEBHOOK")
 guild_webhook=os.getenv('GUILD_WEBHOOK')
-command_webhook=os.getenv('COMMAND_WEBHOOK')
+logs_webhook=os.getenv('COMMAND_WEBHOOK')
 rpokemon_guild_id=os.getenv('RPOKEMON_GUILD_ID')
 secret_role_id=os.getenv('SECRET_ROLE_ID')
-assert None not in (token,error_webhook,feedback_webhook,guild_webhook,command_webhook,rpokemon_guild_id,secret_role_id)
+assert None not in (token,error_webhook,feedback_webhook,guild_webhook,logs_webhook,rpokemon_guild_id,secret_role_id)
 
 intents = discord.Intents.none()
 intents.messages=True
@@ -33,8 +34,61 @@ mentions = discord.AllowedMentions(everyone=False, users=True, roles=False, repl
 # Owner IDS
 assert (OWNER_ID:=os.getenv("OWNER_ID")) is not None and OWNER_ID.isdigit()
 OWNER_ID=int(OWNER_ID)
-#Logging
-discord.utils.setup_logging(level=logging.INFO)
+
+# Logging set up
+class EmbedWebhookLogger:
+    _to_log:list[discord.Embed]
+
+    def __init__(self, webhook_url:str):
+        self.webhook_url=webhook_url
+        self._to_log=[]
+        self.loop=asyncio.get_event_loop()
+        
+        self._session = aiohttp.ClientSession()
+        self._webhook = discord.Webhook.from_url(webhook_url, session=self._session)
+
+    def log(self, embed: discord.Embed) -> None:
+        self._to_log.append(embed)
+    
+    @tasks.loop(seconds=5)
+    async def _loop(self):
+        while self._to_log:
+            embeds=[]
+            while len(embeds)<10 and self._to_log:
+                embeds.append(self._to_log.pop(0))
+                next=self._to_log[0]
+                if sum(map(len,embeds))+len(next)>6000: #max embed length is 6000
+                    break
+                embeds.append(self._to_log.pop(0))
+            await self._webhook.send(embeds=embeds)
+
+class WebhookHandler(logging.Handler):
+    _colours = {
+        logging.DEBUG: discord.Colour.light_grey(),
+        logging.INFO: discord.Colour.gold(),
+        logging.WARNING: discord.Colour.orange(),
+        logging.ERROR: discord.Colour.red(),
+        logging.CRITICAL: discord.Colour.dark_red(),
+    }
+
+    def __init__(self, webhook_url: str, level: int = logging.NOTSET) -> None:
+        super().__init__(level)
+        self._webhook_logger = EmbedWebhookLogger(webhook_url)
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.format(record)
+
+        message = f'{record.message}\n{record.exc_text or ""}'
+        message = message[:1987] + "..." if len(message) > 1987 else message
+
+        self._webhook_logger.log(
+            discord.Embed(
+                colour=self._colours.get(record.levelno),
+                title=record.name,
+                description=f"```py\n{message}```",
+                timestamp=datetime.datetime.fromtimestamp(record.created),
+            ).add_field(name="\N{ZERO WIDTH SPACE}", value=f"{record.filename}:{record.lineno}")
+        )
 
 # Prefix cache implementation
 prefix_cache={}
@@ -63,11 +117,11 @@ class Bot(commands.AutoShardedBot):
 
 
     async def setup_hook(self):
-        assert isinstance(error_webhook,str) and isinstance(feedback_webhook,str) and isinstance(guild_webhook,str) and isinstance(command_webhook,str)
+        assert isinstance(error_webhook,str) and isinstance(feedback_webhook,str) and isinstance(guild_webhook,str) and isinstance(logs_webhook,str)
         self.error_webhook=await self.fetch_webhook(int(error_webhook))
         self.feedback_webhook=await self.fetch_webhook(int(feedback_webhook))
         self.guild_webhook=await self.fetch_webhook(int(guild_webhook))
-        self.command_webhook=await self.fetch_webhook(int(command_webhook))
+        self.logs_webhook=await self.fetch_webhook(int(logs_webhook))
         for ext in sorted(os.listdir("./lib/cogs"),reverse=True): #temp fix to let moveset load after pokemon is loaded
             if ext.endswith(".py") and not ext.startswith("_"):
                 try:
@@ -78,6 +132,8 @@ class Bot(commands.AutoShardedBot):
                     print(desired_trace)
                     
         await self.load_extension('jishaku')
+        webhook_logging=WebhookHandler(logs_webhook)
+        discord.utils.setup_logging(handler=webhook_logging)
         self.pool=await db.setup_database()
         
     async def start(self,test:bool=False) -> None:

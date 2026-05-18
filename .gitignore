@@ -163,3 +163,4 @@ lib/pokedex
 lib/cogs/pokedexdata/*.py
 lib/cogs/pokedexdata/*.zip
 lib/cogs/utilsunused
+lib/cogs/pokedexdata/
