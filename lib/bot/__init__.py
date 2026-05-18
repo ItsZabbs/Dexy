@@ -13,15 +13,15 @@ from ..db import db
 
 # Loading the environment variables
 dotenv.load_dotenv()
-token = os.getenv("BOT_TOKEN")
-test_token=os.getenv("TEST_BOT_TOKEN")
-error_webhook = os.getenv("ERROR_WEBHOOK")
-feedback_webhook=os.getenv("FEEDBACK_WEBHOOK")
-guild_webhook=os.getenv('GUILD_WEBHOOK')
-logs_webhook=os.getenv('COMMAND_WEBHOOK')
-rpokemon_guild_id=os.getenv('RPOKEMON_GUILD_ID')
-secret_role_id=os.getenv('SECRET_ROLE_ID')
-assert None not in (token,error_webhook,feedback_webhook,guild_webhook,logs_webhook,rpokemon_guild_id,secret_role_id)
+TOKEN = os.getenv("BOT_TOKEN")
+TEST_TOKEN=os.getenv("TEST_BOT_TOKEN")
+ERROR_WH = os.getenv("ERROR_WEBHOOK")
+FEEDBACK_WH=os.getenv("FEEDBACK_WEBHOOK")
+GUILD_WH=os.getenv('GUILD_WEBHOOK')
+LOGS_WH=os.getenv('COMMAND_WEBHOOK')
+RPOKEMON_GID=os.getenv('RPOKEMON_GUILD_ID')
+SECRET_RID=os.getenv('SECRET_ROLE_ID')
+assert None not in (TOKEN,ERROR_WH,FEEDBACK_WH,GUILD_WH,LOGS_WH,RPOKEMON_GID,SECRET_RID)
 
 intents = discord.Intents.none()
 intents.messages=True
@@ -45,7 +45,10 @@ class EmbedWebhookLogger:
         self.loop=asyncio.get_event_loop()
         
         self._session = aiohttp.ClientSession()
-        self._webhook = discord.Webhook.from_url(webhook_url, session=self._session)
+        self._webhook = discord.Webhook.from_url(self.webhook_url, session=self._session)
+
+        self._loop.add_exception_type(discord.HTTPException)
+        self._loop.start()
 
     def log(self, embed: discord.Embed) -> None:
         self._to_log.append(embed)
@@ -55,7 +58,6 @@ class EmbedWebhookLogger:
         while self._to_log:
             embeds=[]
             while len(embeds)<10 and self._to_log:
-                embeds.append(self._to_log.pop(0))
                 next=self._to_log[0]
                 if sum(map(len,embeds))+len(next)>6000: #max embed length is 6000
                     break
@@ -104,23 +106,23 @@ async def get_prefix(user,message):
             
 class Bot(commands.AutoShardedBot):
     def __init__(self):
-        self.TOKEN = token
+        self.TOKEN = TOKEN
         self.ready = False
         self.reconnect = True
         self.prefix_cache=db.prefix_cache
         self.alias_cache=db.alias_cache
-        assert isinstance(rpokemon_guild_id,str)
-        self.rpokemon_guild_id=int(rpokemon_guild_id)
+        assert isinstance(RPOKEMON_GID,str)
+        self.rpokemon_guild_id=int(RPOKEMON_GID)
         super().__init__(case_insensitive=True, allowed_mentions=mentions, intents=intents,
                          command_prefix=get_prefix,strip_after_prefix=True,
                          owner_id=OWNER_ID,max_messages=None)
 
 
     async def setup_hook(self):
-        assert isinstance(error_webhook,str) and isinstance(feedback_webhook,str) and isinstance(guild_webhook,str) and isinstance(logs_webhook,str)
-        self.error_webhook=await self.fetch_webhook(int(error_webhook))
-        self.feedback_webhook=await self.fetch_webhook(int(feedback_webhook))
-        self.guild_webhook=await self.fetch_webhook(int(guild_webhook))
+        assert isinstance(ERROR_WH,str) and isinstance(FEEDBACK_WH,str) and isinstance(GUILD_WH,str) and isinstance(LOGS_WH,str)
+        self.error_webhook=await self.fetch_webhook(int(ERROR_WH))
+        self.feedback_webhook=await self.fetch_webhook(int(FEEDBACK_WH))
+        self.guild_webhook=await self.fetch_webhook(int(GUILD_WH))
         for ext in sorted(os.listdir("./lib/cogs"),reverse=True): #temp fix to let moveset load after pokemon is loaded
             if ext.endswith(".py") and not ext.startswith("_"):
                 try:
@@ -131,12 +133,13 @@ class Bot(commands.AutoShardedBot):
                     print(desired_trace)
                     
         await self.load_extension('jishaku')
-        webhook_logging=WebhookHandler(logs_webhook, level=logging.INFO)
+        self.logs_webhook=discord.Webhook.from_url(LOGS_WH, client=self)
+        webhook_logging=WebhookHandler(LOGS_WH, level=logging.INFO)
         discord.utils.setup_logging(handler=webhook_logging)
         self.pool=await db.setup_database()
         
     async def start(self,test:bool=False) -> None:
-        bot_token=token if not test else test_token
+        bot_token=TOKEN if not test else TEST_TOKEN
         assert isinstance(bot_token,str)
         await super().start(bot_token, reconnect=True)
 

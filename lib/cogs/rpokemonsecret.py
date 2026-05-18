@@ -1,15 +1,15 @@
 from discord.app_commands import command,guilds,Choice
-from lib.bot import rpokemon_guild_id,secret_role_id,Bot
+from lib.bot import RPOKEMON_GID,SECRET_RID,Bot
 from lib.cogs.pokemon import move_names
 from discord import Interaction,Role,Object,Member,Role,Guild
 from discord import Interaction,Role,Object,Member,Role,Guild
 from typing import Optional
 
 role:Optional[Role]=None
-assert rpokemon_guild_id is not None and secret_role_id is not None
+assert RPOKEMON_GID is not None and SECRET_RID is not None
 
 @command(name='use',description='Use a move')
-@guilds(Object(rpokemon_guild_id))
+@guilds(Object(RPOKEMON_GID))
 async def use(interaction:Interaction,move:str):
     assert isinstance(interaction.user,Member) and isinstance(interaction.guild,Guild)
     assert role is not None
@@ -28,5 +28,5 @@ async def autocomplete(interaction:Interaction,current:str):
 async def setup(bot:Bot):
     bot.tree.add_command(use)
     global role
-    role=(await bot.fetch_guild(int(rpokemon_guild_id))).get_role(int(secret_role_id))
+    role=(await bot.fetch_guild(int(RPOKEMON_GID))).get_role(int(SECRET_RID))
     assert isinstance(role,Role)
